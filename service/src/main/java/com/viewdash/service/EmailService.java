@@ -20,21 +20,39 @@ public class EmailService {
     }
 
     public void sendHtmlEmail(String toEmail, String subject, String name, String token) throws MessagingException {
+        Result result = getResult(toEmail, subject, name, token);
+
+        String htmlContent = templateEngine.process("email-password-template", result.context());
+
+        result.helper().setText(htmlContent, true);
+
+        mailSender.send(result.mimeMessage());
+    }
+
+    private Result getResult(String toEmail, String subject, String name, String token) throws MessagingException {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
 
         MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-        helper.setFrom("viewdash76@gmail.com");
+        helper.setFrom("ViewDash");
         helper.setTo(toEmail);
         helper.setSubject(subject);
 
         Context context = new Context();
         context.setVariable("name", name);
         context.setVariable("token", token);
+        return new Result(mimeMessage, helper, context);
+    }
 
-        String htmlContent = templateEngine.process("email-password-template", context);
+    private record Result(MimeMessage mimeMessage, MimeMessageHelper helper, Context context) {
+    }
 
-        helper.setText(htmlContent, true);
+    public void sendResetPasswordEmail(String toEmail, String subject, String name, String token) throws MessagingException {
+        Result result = getResult(toEmail, subject, name, token);
 
-        mailSender.send(mimeMessage);
+        String htmlContent = templateEngine.process("email-reset-password-template", result.context());
+
+        result.helper().setText(htmlContent, true);
+
+        mailSender.send(result.mimeMessage());
     }
 }

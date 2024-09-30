@@ -16,4 +16,9 @@ public interface UserRepository extends MongoRepository<User, String> {
     @Query("{'document': ?0}")
     @Transactional
     void updateUserByDocument(String document, @Param("user") User user);
+
+
+    @Query("{'document': ?0}")
+    @Transactional
+    void deleteUserByDocument(String document);
 }

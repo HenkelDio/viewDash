@@ -20,6 +20,8 @@ import java.util.Optional;
 public class UserService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    public static final String INACTIVE = "INACTIVE";
+    public static final String ACTIVE = "ACTIVE";
 
     @Autowired
     UserRepository userRepository;
@@ -41,9 +43,11 @@ public class UserService {
         return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    public ResponseEntity<List<User>> findAllUsers(String username) {
+    public ResponseEntity<List<User>> findAllUsers(String username, String status) {
         logger.info("searching all users by username: {}", username);
-        return ResponseEntity.ok(userRepository.findAll());
+
+        Query query = new Query(Criteria.where("status").is(status));
+        return ResponseEntity.ok(mongoTemplate.find(query, User.class));
     }
 
     public ResponseEntity<User> createUser(User user, String usernamePrincipal) {
@@ -58,6 +62,9 @@ public class UserService {
                 logger.info("user already exists");
                 return ResponseEntity.badRequest().build();
             }
+
+            user.setDocument(user.getDocument().replace("-", "").replace(".", ""));
+            user.setStatus(User.STATUS.ACTIVE);
 
             userRepository.save(user);
 
@@ -76,13 +83,14 @@ public class UserService {
     public ResponseEntity<User> updateUser(User user, String usernamePrincipal) {
         logger.info("updating user: {}, by user {}", user.getDocument(), usernamePrincipal);
 
+        user.setDocument(user.getDocument().replace("-", "").replace(".", ""));
         Optional<User> userOptional = userRepository.findByDocument(user.getDocument());
         if(userOptional.isPresent()) {
             Query query = new Query(Criteria.where("document").is(user.getDocument()));
             Update update = new Update();
             update.set("name", user.getName());
             update.set("email", user.getEmail());
-            update.set("department", user.getDepartment());
+            update.set("departments", user.getDepartments());
             update.set("role", user.getRole());
 
             mongoTemplate.updateFirst(query, update, User.class);
@@ -90,5 +98,107 @@ public class UserService {
         }
 
         return ResponseEntity.badRequest().build();
+    }
+
+    public ResponseEntity<?> deleteUser(String username, String userDocument) {
+        logger.info("deleting user: {}, by user {}", userDocument, username);
+
+        try {
+            Optional<User> userOptional = userRepository.findByDocument(userDocument);
+
+            if(userOptional.isPresent()) {
+                userRepository.deleteUserByDocument(userDocument);
+                logger.info("user deleted");
+                return ResponseEntity.ok().build();
+            }
+
+            return ResponseEntity.notFound().build();
+
+        } catch (Exception e) {
+            logger.error("error deleting user", e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    public ResponseEntity<?> disableUser(String username, String userDocument) {
+        logger.info("disabling user: {}, by user {}", userDocument, username);
+
+        try {
+            Optional<User> userOptional = userRepository.findByDocument(userDocument);
+
+            if(userOptional.isPresent()) {
+                Query query = new Query(Criteria.where("document").is(userDocument));
+                Update update = new Update().set("status", INACTIVE);
+                mongoTemplate.updateFirst(query, update, User.class);
+
+                logger.info("user disabled");
+                return ResponseEntity.ok().build();
+            }
+
+            return ResponseEntity.notFound().build();
+
+        } catch (Exception e) {
+            logger.error("error disabling user", e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    public ResponseEntity<?> reactivateUser(String username, String userDocument) {
+        logger.info("Reactivating user: {}, by user {}", userDocument, username);
+
+        try {
+            Optional<User> userOptional = userRepository.findByDocument(userDocument);
+
+            if(userOptional.isPresent()) {
+                Query query = new Query(Criteria.where("document").is(userDocument));
+                Update update = new Update().set("status", ACTIVE);
+                mongoTemplate.updateFirst(query, update, User.class);
+
+                logger.info("user reactivated");
+                return ResponseEntity.ok().build();
+            }
+
+            return ResponseEntity.notFound().build();
+
+        } catch (Exception e) {
+            logger.error("error reactivating user", e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    public ResponseEntity<?> updateUserName(String username, String document, String name) {
+        logger.info("updating user name: {}, by user {}", name, username);
+
+        try {
+            Query query = new Query(Criteria.where("document").is(document));
+            Update update = new Update().set("name", name);
+            mongoTemplate.updateFirst(query, update, User.class);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("error updating user name", e);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    public ResponseEntity<?> resetPassword(String username, String userDocument) {
+        logger.info("reset password for user: {}, by user {}", username, userDocument);
+
+        try {
+            userDocument = userDocument.replace(".", "").replace("-", "");
+            Optional<User> userOptional = userRepository.findByDocument(userDocument);
+
+            if(userOptional.isPresent()) {
+                String token = authService.generateToken(userOptional.get());
+                emailService.sendResetPasswordEmail(userOptional.get().getEmail(), "Redefinir sua senha", userOptional.get().getName(), token);
+
+                logger.info("Sending email");
+                return ResponseEntity.ok().build();
+            }
+
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            logger.error("error resetting password", e);
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

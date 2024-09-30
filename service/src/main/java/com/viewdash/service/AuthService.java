@@ -9,9 +9,16 @@ import com.viewdash.document.ResponseAuthDTO;
 import com.viewdash.document.User;
 import com.viewdash.service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,21 +33,43 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AuthService {
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
+
     @Value("${api.security.token.secret")
     private String secret;
 
     @Autowired
     UserRepository userRepository;
 
+    @Qualifier("mongoTemplate")
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
 
     public ResponseEntity<?> login(String email, String password) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        if(passwordEncoder.matches(password, user.getPassword())) {
-            String token = generateToken(user);
-            return ResponseEntity.ok(new ResponseAuthDTO(user.getName(), token));
+        logger.info("Logging In {}", email);
+
+
+        try {
+            User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+            if(!user.getStatus().equals(User.STATUS.ACTIVE)) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+            if(passwordEncoder.matches(password, user.getPassword())) {
+                String token = generateToken(user);
+                user.setToken(token);
+                return ResponseEntity.ok(user);
+            }
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.badRequest().build();
+
+
     }
 
     public String generateToken(User user) {
@@ -93,6 +122,22 @@ public class AuthService {
             return ResponseEntity.ok(new ResponseAuthDTO(newUser.getName(), token));
         }
         return ResponseEntity.badRequest().build();
+    }
+
+    public ResponseEntity<?> definePassword(String password, User user) {
+        logger.info("Defining new password to user: {}", user.getDocument());
+
+        try {
+            Query query = new Query(Criteria.where("document").is(user.getDocument()));
+
+            PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+            Update update = new Update().set("password", passwordEncoder.encode(password));
+            mongoTemplate.updateFirst(query, update, User.class);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
     }
 
 

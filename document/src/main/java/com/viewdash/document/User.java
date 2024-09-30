@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Getter
 @Setter
@@ -19,5 +20,18 @@ public class User implements Serializable {
 
     private String role;
     private String document;
-    private String department;
+    private List<Department> departments;
+    private String token;
+    private STATUS status;
+
+    @Getter
+    @Setter
+    public static class Department implements Serializable {
+        private String name;
+        private String label;
+    }
+
+    public enum STATUS {
+        ACTIVE, INACTIVE;
+    }
 }
