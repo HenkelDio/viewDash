@@ -6,19 +6,28 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Configuration
 public class CorsConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:9000"); // Adicione sua origem
-        configuration.addAllowedMethod("*"); // Permita todos os métodos (GET, POST, etc.)
-        configuration.addAllowedHeader("*"); // Permita todos os cabeçalhos
-        configuration.setAllowCredentials(true); // Permitir credenciais, se necessário
+
+        List<String> allowedOrigins = Arrays.asList(
+                "http://localhost:9000",
+                "https://dashview-iota.vercel.app"
+        );
+
+        configuration.setAllowedOrigins(allowedOrigins);
+        configuration.addAllowedMethod("*");
+        configuration.addAllowedHeader("*");
+        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Aplica a configuração a todos os endpoints
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }
