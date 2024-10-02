@@ -1,5 +1,5 @@
-# Usar uma imagem do Maven para construir a aplicação
-FROM maven:3.8.6-openjdk-21 AS builder
+# Usar uma imagem do Maven com OpenJDK 21
+FROM maven:3.8.6-openjdk-21-slim AS builder
 
 # Definir o diretório de trabalho
 WORKDIR /app
