@@ -3,12 +3,17 @@ version: 0.2
 phases:
   install:
     commands:
-      - echo "Installing dependencies...."
+      - echo "Installing dependencies..."
       - mvn install
   build:
     commands:
-      - echo "Building the application..."
+      - echo "Building the project..."
       - mvn clean package
+  post_build:
+    commands:
+      - echo "Copying jar to root folder"
+      - cp app/target/app.jar ./app.jar
+
 artifacts:
   files:
-  - app/target/*.jar
+    - app.jar
