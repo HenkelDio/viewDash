@@ -5,7 +5,7 @@ FROM openjdk:21-jdk-slim
 WORKDIR /app
 
 # Copiar o arquivo .jar do build local para o contêiner
-COPY target/app.jar /app/app.jar
+COPY app/target/app.jar /app/app.jar
 
 # Definir a variável de ambiente que informa o nome do arquivo .jar
 ENV JAVA_APP_JAR=app.jar
