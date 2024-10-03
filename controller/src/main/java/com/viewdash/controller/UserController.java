@@ -65,4 +65,11 @@ public class UserController {
         return userService.resetPassword(principal.getDocument(), document);
     }
 
+    @GetMapping("count-users")
+    public ResponseEntity<?> countUsers() {
+        return userService.countUsers();
+    }
+
+
+
 }

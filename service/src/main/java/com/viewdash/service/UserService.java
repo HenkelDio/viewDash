@@ -201,4 +201,9 @@ public class UserService {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    public ResponseEntity<?> countUsers() {
+        Query query = new Query(Criteria.where("status").is(ACTIVE));
+        return ResponseEntity.ok(mongoTemplate.count(query, User.class));
+    }
 }
