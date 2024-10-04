@@ -1,5 +1,5 @@
-# Usar Maven com OpenJDK 21 para o build
-FROM maven:3.8.6-openjdk-21 AS build
+# Usar Maven com OpenJDK 17 para o build
+FROM maven:3.8.6-openjdk-17 AS build
 
 # Definir o diretório de trabalho
 WORKDIR /app
