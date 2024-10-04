@@ -1,5 +1,9 @@
-# Usar Maven com OpenJDK 17 para o build
-FROM maven:3.8.6-openjdk-17 AS build
+# Etapa 1: Criar imagem customizada com Maven 3.8.6 e OpenJDK 17
+FROM eclipse-temurin:17-jdk AS build
+
+# Instalar Maven manualmente
+RUN apt-get update && \
+    apt-get install -y maven=3.8.6-3
 
 # Definir o diretório de trabalho
 WORKDIR /app
@@ -22,8 +26,8 @@ COPY security/src ./security/src
 # Fazer o build da aplicação
 RUN mvn clean package -DskipTests
 
-# Usar uma imagem base com OpenJDK 21 para executar a aplicação
-FROM openjdk:21-jdk-slim
+# Etapa 2: Usar uma imagem base com OpenJDK 17 para executar a aplicação
+FROM eclipse-temurin:17-jdk-slim
 
 # Definir o diretório de trabalho dentro do contêiner
 WORKDIR /app
