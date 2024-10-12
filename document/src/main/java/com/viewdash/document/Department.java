@@ -10,4 +10,5 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Department {
     private String label;
     private String name;
+    private String status;
 }
