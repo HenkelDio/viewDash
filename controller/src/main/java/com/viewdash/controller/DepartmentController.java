@@ -22,4 +22,9 @@ public class DepartmentController {
     public ResponseEntity<?> findAllDepartments(@RequestParam String status) {
         return departmentService.findAllDepartments(status);
     }
+
+    @PutMapping("change-status")
+    public ResponseEntity<?> changeStatusDepartment(@RequestParam String status, @RequestParam String name) {
+        return departmentService.changeStatusDepartment(status, name);
+    }
 }
