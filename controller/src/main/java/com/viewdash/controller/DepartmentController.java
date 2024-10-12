@@ -24,7 +24,7 @@ public class DepartmentController {
     }
 
     @PutMapping("change-status")
-    public ResponseEntity<?> changeStatusDepartment(@RequestParam String status, @RequestParam String name) {
+    public ResponseEntity<?> changeStatusDepartment(@RequestParam String status, @RequestHeader String name) {
         return departmentService.changeStatusDepartment(status, name);
     }
 }

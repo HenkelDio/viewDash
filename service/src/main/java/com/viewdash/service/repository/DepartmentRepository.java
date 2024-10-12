@@ -13,4 +13,7 @@ public interface DepartmentRepository extends MongoRepository<Department, String
 
     @Query("{'status': ?0}")
     List<Department> findAllByStatus(String status);
+
+    @Query("{'name': ?0}")
+    Department findByName(String name);
 }

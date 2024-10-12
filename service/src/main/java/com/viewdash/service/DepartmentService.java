@@ -17,19 +17,20 @@ import javax.swing.text.Document;
 import java.util.List;
 
 @Service
-public class DepartmentService {
-    private static final Logger logger = LoggerFactory.getLogger(DepartmentService.class);
+public class DepartmentService extends AbstractService {
 
     @Autowired
     DepartmentRepository departmentRepository;
 
-    @Qualifier("mongoTemplate")
-    @Autowired
-    private MongoTemplate mongoTemplate;
-
     public ResponseEntity<?> createDepartment(Department department) {
         logger.info("Creating department {}", department);
         department.setStatus("ACTIVE");
+
+        Department departmentFound = departmentRepository.findByName(department.getName());
+
+        if(departmentFound != null) {
+            return ResponseEntity.badRequest().body("Department already exists");
+        }
 
         try {
             departmentRepository.insert(department);
@@ -50,7 +51,7 @@ public class DepartmentService {
         logger.info("Update status department");
         Query query = new Query(Criteria.where("name").is(name));
 
-        Department department = mongoTemplate.find(query, Department.class).getFirst();
+        Department department = mongoTemplate.findOne(query, Department.class);
         if(department == null){
             return ResponseEntity.notFound().build();
         }
