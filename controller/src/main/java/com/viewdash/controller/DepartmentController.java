@@ -19,7 +19,7 @@ public class DepartmentController {
     }
 
     @GetMapping("find-all")
-    public ResponseEntity<?> findAllDepartments() {
-        return departmentService.findAllDepartments();
+    public ResponseEntity<?> findAllDepartments(@RequestParam String status) {
+        return departmentService.findAllDepartments(status);
     }
 }

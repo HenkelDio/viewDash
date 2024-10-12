@@ -19,6 +19,7 @@ public class DepartmentService {
 
     public ResponseEntity<?> createDepartment(Department department) {
         logger.info("Creating department {}", department);
+        department.setStatus("ACTIVE");
 
         try {
             departmentRepository.insert(department);
@@ -29,9 +30,9 @@ public class DepartmentService {
         }
     }
 
-    public ResponseEntity<List<Department>> findAllDepartments() {
+    public ResponseEntity<List<Department>> findAllDepartments(String status) {
         logger.info("Finding all departments");
-        List<Department> departments = departmentRepository.findAll();
+        List<Department> departments = departmentRepository.findAllByStatus(status);
         return ResponseEntity.ok().body(departments);
     }
 }
