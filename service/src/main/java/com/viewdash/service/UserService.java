@@ -66,6 +66,10 @@ public class UserService {
             user.setDocument(user.getDocument().replace("-", "").replace(".", ""));
             user.setStatus(User.STATUS.ACTIVE);
 
+            User.Permissions permissions = new User.Permissions();
+            permissions.setFirstLogin(true);
+            user.setPermissions(permissions);
+
             userRepository.save(user);
 
             logger.info("user created, sending email");
@@ -205,5 +209,20 @@ public class UserService {
     public ResponseEntity<?> countUsers() {
         Query query = new Query(Criteria.where("status").is(ACTIVE));
         return ResponseEntity.ok(mongoTemplate.count(query, User.class));
+    }
+
+    public ResponseEntity<?> setNotFirstLogin(User principal) {
+        logger.info("Setting not first login to " + principal.getDocument());
+
+        Query query = new Query(Criteria.where("document").is(principal.getDocument()));
+        Update update = new Update().set("permissions.firstLogin", false);
+
+        try {
+            mongoTemplate.updateFirst(query, update, User.class);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error("error setting not first login", e);
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

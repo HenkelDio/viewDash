@@ -23,12 +23,19 @@ public class User implements Serializable {
     private List<Department> departments;
     private String token;
     private STATUS status;
+    private Permissions permissions;
 
     @Getter
     @Setter
     public static class Department implements Serializable {
         private String name;
         private String label;
+    }
+
+    @Getter
+    @Setter
+    public static class Permissions implements Serializable {
+        private boolean firstLogin;
     }
 
     public enum STATUS {

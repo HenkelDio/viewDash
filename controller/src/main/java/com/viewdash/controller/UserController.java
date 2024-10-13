@@ -70,6 +70,9 @@ public class UserController {
         return userService.countUsers();
     }
 
-
+    @PutMapping("set-not-first-login")
+    public ResponseEntity<?> setNotFirstLogin(@AuthenticationPrincipal User principal) {
+        return userService.setNotFirstLogin(principal);
+    }
 
 }
