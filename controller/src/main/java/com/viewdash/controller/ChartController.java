@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
 import java.util.List;
@@ -24,8 +25,16 @@ public class ChartController {
     }
 
     @GetMapping("/find-all-by-department")
-    public ResponseEntity<List<Chart>> findAllByDepartment(@AuthenticationPrincipal User principal, @RequestParam String status) {
-        return chartService.findAllByDepartment(principal, status);
+    public ResponseEntity<List<Chart>> findAllByDepartment(
+            @AuthenticationPrincipal User principal,
+            @RequestParam String status,
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String perspective,
+            @RequestParam(required = false) String process,
+            @RequestParam(required = false) String responsible,
+            @RequestParam(required = false) String year) {
+
+        return chartService.findAllByDepartment(principal, status, department, perspective, process, responsible, year);
     }
 
     @GetMapping("/find-by-id")
@@ -41,5 +50,10 @@ public class ChartController {
     @PutMapping("/update-chart")
     public ResponseEntity<?> updateChart(@AuthenticationPrincipal User principal, @RequestBody Chart chart) {
         return chartService.updateChart(chart, principal);
+    }
+
+    @PostMapping("/create-charts-xls")
+    public ResponseEntity<?> createChartsXls(@RequestBody MultipartFile file) {
+        return chartService.loadXLSChart(file);
     }
 }
