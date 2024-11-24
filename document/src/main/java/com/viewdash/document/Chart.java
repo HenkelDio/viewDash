@@ -31,6 +31,7 @@ public class Chart implements Serializable {
     private long createdOn;
     private STATUS status;
     private String year;
+    private String mask;
 
     @Setter
     @Getter
