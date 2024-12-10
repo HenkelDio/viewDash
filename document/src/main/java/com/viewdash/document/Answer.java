@@ -14,7 +14,6 @@ public class Answer {
     private List<Form.Question> questions;
     private String patientName;
     private String patientPhone;
-    private String patientEmail;
     private Long dateOfAdmission;
     private String type;
     private String answerType;

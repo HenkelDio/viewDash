@@ -1,8 +1,10 @@
 package com.viewdash.controller;
 
 import com.viewdash.document.Form;
+import com.viewdash.document.User;
 import com.viewdash.service.NPSService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,8 +23,12 @@ public class NPSController {
     }
 
     @PostMapping("send-nps")
-    public ResponseEntity<?> sendNPS(@RequestParam("file") MultipartFile file) throws Exception {
-        npsService.sendNps(file);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> sendNPS(@RequestParam("file") MultipartFile file, @AuthenticationPrincipal User principal) throws Exception {
+        return npsService.sendNps(file, principal);
+    }
+
+    @GetMapping("get-nps")
+    public ResponseEntity<?> getNPS(@AuthenticationPrincipal User principal) throws Exception {
+        return npsService.getNps(principal);
     }
 }

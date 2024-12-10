@@ -1,7 +1,9 @@
 package com.viewdash.service;
 
+import com.viewdash.document.PatientNps;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.bson.Document;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -39,7 +41,11 @@ public class EmailService {
 
         Context context = new Context();
         context.setVariable("name", name);
-        context.setVariable("token", token);
+
+        if(token != null) {
+            context.setVariable("token", token);
+        }
+
         return new Result(mimeMessage, helper, context);
     }
 
@@ -50,6 +56,16 @@ public class EmailService {
         Result result = getResult(toEmail, subject, name, token);
 
         String htmlContent = templateEngine.process("email-reset-password-template", result.context());
+
+        result.helper().setText(htmlContent, true);
+
+        mailSender.send(result.mimeMessage());
+    }
+
+    public void sendNpsEmail(PatientNps patient) throws MessagingException {
+        Result result = getResult(patient.getEmail(), "Clínica Los Angeles | Pesquisa de satisfação", patient.getName(), null);
+
+        String htmlContent = templateEngine.process("nps-template-email.html", result.context());
 
         result.helper().setText(htmlContent, true);
 

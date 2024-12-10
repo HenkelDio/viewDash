@@ -18,10 +18,14 @@ public class Form implements Serializable {
     @Getter
     @Setter
     public static class Question implements Serializable {
+        private String index;
         private String title;
         private String inputType;
         private List<String> options;
         private String answer;
         private String observation;
+        private Boolean showObservation;
+        private String patientName;
+        private String patientPhone;
     }
 }
