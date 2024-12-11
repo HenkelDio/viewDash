@@ -1,9 +1,6 @@
 package com.viewdash.service;
 
-import com.viewdash.document.Form;
-import com.viewdash.document.Nps;
-import com.viewdash.document.PatientNps;
-import com.viewdash.document.User;
+import com.viewdash.document.*;
 import com.viewdash.service.repository.FormRepository;
 import jakarta.mail.MessagingException;
 import org.bson.Document;
@@ -38,6 +35,14 @@ public class NPSService extends AbstractService {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error");
         }
+    }
+
+    public ResponseEntity<Long> countAnswers() {
+        return ResponseEntity.ok(mongoTemplate.count(new Query(), Nps.class));
+    }
+
+    public ResponseEntity<Long> countFeedbackReturns() {
+        return ResponseEntity.ok(mongoTemplate.count(new Query(Criteria.where("feedbackReturn").is(true)), Answer.class));
     }
 
     public void processCSV(MultipartFile file, User principal) throws Exception {
@@ -81,22 +86,23 @@ public class NPSService extends AbstractService {
             throw new Exception("Error while reading the file: " + e.getMessage(), e);
         }
 
-        logger.info("Sending NPS " + principal.getDocument());
-        patients.forEach(document -> {
-            try {
-                emailService.sendNpsEmail(document);
-            } catch (MessagingException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
-
         logger.info("Saving NPS " + principal.getDocument());
+
         Nps nps = new Nps();
         nps.setSentDate(System.currentTimeMillis());
         nps.setSentBy(principal.getDocument());
         nps.setPatientNpsList(patients);
         mongoTemplate.save(nps);
+
+        logger.info("Sending NPS " + principal.getDocument());
+        patients.forEach(document -> {
+            try {
+                emailService.sendNpsEmail(document, nps.getId());
+            } catch (MessagingException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
     }
 
     public ResponseEntity<?> getNps(User principal) {

@@ -41,10 +41,8 @@ public class EmailService {
 
         Context context = new Context();
         context.setVariable("name", name);
+        context.setVariable("token", token);
 
-        if(token != null) {
-            context.setVariable("token", token);
-        }
 
         return new Result(mimeMessage, helper, context);
     }
@@ -62,8 +60,8 @@ public class EmailService {
         mailSender.send(result.mimeMessage());
     }
 
-    public void sendNpsEmail(PatientNps patient) throws MessagingException {
-        Result result = getResult(patient.getEmail(), "Clínica Los Angeles | Pesquisa de satisfação", patient.getName(), null);
+    public void sendNpsEmail(PatientNps patient, String npsId) throws MessagingException {
+        Result result = getResult(patient.getEmail(), "Clínica Los Angeles | Pesquisa de satisfação", patient.getName(), npsId);
 
         String htmlContent = templateEngine.process("nps-template-email.html", result.context());
 

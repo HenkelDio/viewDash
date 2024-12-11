@@ -21,12 +21,12 @@ public class PublicFormService extends AbstractService {
         return ResponseEntity.ok(mongoTemplate.findOne(new Query(Criteria.where("status").is("ACTIVE")), Form.class));
     }
 
-    public ResponseEntity<Form> saveForm(List<AnswerDTO> answerDTO) {
+    public ResponseEntity<Form> saveForm(List<AnswerDTO> answerDTO, String npsId) {
         logger.info("Saving form");
 
-        Answer answer = new Answer();
-        AnswerBuilder answerBuilder = new AnswerBuilder(answerDTO);
+        AnswerBuilder answerBuilder = new AnswerBuilder(answerDTO, npsId);
         answerBuilder.build();
+        mongoTemplate.save(answerBuilder.getAnswer());
 
         return ResponseEntity.ok(new Form());
     }

@@ -17,4 +17,6 @@ public class Answer {
     private Long dateOfAdmission;
     private String type;
     private String answerType;
+    private boolean feedbackReturn;
+    private String npsId;
 }

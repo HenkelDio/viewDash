@@ -28,7 +28,17 @@ public class NPSController {
     }
 
     @GetMapping("get-nps")
-    public ResponseEntity<?> getNPS(@AuthenticationPrincipal User principal) throws Exception {
+    public ResponseEntity<?> getNPS(@AuthenticationPrincipal User principal) {
         return npsService.getNps(principal);
+    }
+
+    @GetMapping("count-answers")
+    public ResponseEntity<?> countAnswers() {
+        return npsService.countAnswers();
+    }
+
+    @GetMapping("count-feedback-returns")
+    public ResponseEntity<?> countFeedbackReturns() {
+        return npsService.countFeedbackReturns();
     }
 }
