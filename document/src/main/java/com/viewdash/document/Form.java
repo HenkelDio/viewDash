@@ -13,6 +13,7 @@ import java.util.List;
 public class Form implements Serializable {
     private List<Question> questions;
     private String status;
+    private Parameters parameters;
 
 
     @Getter
@@ -25,7 +26,12 @@ public class Form implements Serializable {
         private String answer;
         private String observation;
         private Boolean showObservation;
-        private String patientName;
-        private String patientPhone;
+        private List<String> departmentIds;
+    }
+
+    @Getter
+    @Setter
+    public static class Parameters implements Serializable {
+        private boolean feedbackRequest;
     }
 }

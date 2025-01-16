@@ -60,4 +60,17 @@ public class DepartmentService extends AbstractService {
         mongoTemplate.updateFirst(query, update, Department.class);
         return ResponseEntity.ok().build();
     }
+
+    public ResponseEntity<?> updateDepartment(Department department) {
+        logger.info("Update department {}", department);
+
+        try {
+            department.setStatus("ACTIVE");
+            departmentRepository.save(department);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

@@ -3,6 +3,7 @@ package com.viewdash.controller;
 import com.viewdash.document.DTO.AnswerDTO;
 import com.viewdash.document.Form;
 import com.viewdash.service.PublicFormService;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -23,8 +24,8 @@ public class PublicFormController {
     }
 
     @PostMapping("save-answer")
-    public ResponseEntity<Form> saveForm(@RequestBody List<AnswerDTO> answers, @RequestParam("token") String npsId) {
-        return publicFormService.saveForm(answers, npsId);
+    public ResponseEntity<Form> saveAnswer(@RequestBody AnswerDTO answerDTO, @RequestParam("token") String npsId) throws MessagingException {
+        return publicFormService.saveAnswer(answerDTO, npsId);
     }
 
 }

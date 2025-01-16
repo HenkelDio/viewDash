@@ -2,14 +2,20 @@ package com.viewdash.document;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.io.Serializable;
 import java.util.List;
 
 @Getter
 @Setter
 @Document(collection = "answer")
 public class Answer {
+
+    @Id
+    private String id;
+
     private Long timestamp;
     private List<Form.Question> questions;
     private String patientName;
@@ -19,4 +25,12 @@ public class Answer {
     private String answerType;
     private boolean feedbackReturn;
     private String npsId;
+    private RequestAnswered requestAnswered;
+
+    @Getter
+    @Setter
+    public static class RequestAnswered implements Serializable {
+        private String username;
+        private String timestamp;
+    }
 }

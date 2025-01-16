@@ -1,8 +1,11 @@
-package com.viewdash.service.Utils;
+package com.viewdash.service.utils;
 
 import com.viewdash.document.Answer;
+import com.viewdash.document.Chart;
 import com.viewdash.document.DTO.AnswerDTO;
 import com.viewdash.document.Form;
+import com.viewdash.service.EmailService;
+import jakarta.mail.MessagingException;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -10,66 +13,107 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class AnswerBuilder {
 
-    private final List<AnswerDTO> answerDTO;
-    @Getter
-    private Answer answer = new Answer();
-    private final List<Form.Question> questions = new ArrayList<>();
-    private String npsId;
+    private static final String DATE_OF_ADMISSION_INDEX = "15";
+    private static final String ANSWER_TYPE_INDEX = "16";
+    private static final int LOW_NPS_THRESHOLD = 6;
 
-    public AnswerBuilder(List<AnswerDTO> answerDTO, String npsId) {
+    private final AnswerDTO answerDTO;
+    @Getter
+    private final Answer answer = new Answer();
+
+    @Getter
+    private final List<Form.Question> questions = new ArrayList<>();
+    private final String npsId;
+    private final EmailService emailService;
+
+    public AnswerBuilder(AnswerDTO answerDTO, String npsId, EmailService emailService) {
         this.answerDTO = answerDTO;
         this.npsId = npsId;
+        this.emailService = emailService;
     }
 
-    public void build() {
-        for (AnswerDTO item : answerDTO) {
-            Form.Question question = new Form.Question();
+    public void build() throws MessagingException {
+        setBasicAnswerDetails();
+        processAnswers();
+        answer.setQuestions(questions);
+    }
 
-            if(item.getAnswer() != null) {
-                question.setAnswer(item.getAnswer());
+    private void setBasicAnswerDetails() {
+        answer.setNpsId(npsId);
+        answer.setTimestamp(System.currentTimeMillis());
+        answer.setFeedbackReturn(answerDTO.getPatientInfo().isPatientFeedbackReturn());
+        answer.setPatientName(answerDTO.getPatientInfo().getPatientName());
+        answer.setPatientPhone(answerDTO.getPatientInfo().getPatientPhone());
+    }
+
+    private void processAnswers() {
+        ExecutorService executorService = Executors.newCachedThreadPool(); // Pool de threads escalável
+
+        try {
+            for (AnswerDTO.Answer item : answerDTO.getAnswers()) {
+                Form.Question question = buildQuestion(item);
+                handleSpecialIndexes(item);
+                questions.add(question);
+
+                if (isLowNpsScore(item)) {
+                    executorService.submit(() -> {
+                        try {
+                            sendEmailToManager(question);
+                        } catch (MessagingException e) {
+                            System.err.println("Erro ao enviar e-mail para o gerente: " + e.getMessage());
+                            e.printStackTrace();
+                        }
+                    });
+                }
             }
+        } finally {
+            executorService.shutdown(); // Garante que o pool será fechado após o uso
+        }
+    }
 
-            if(item.getObservation() != null) {
-                question.setObservation(item.getObservation());
-            }
 
-            question.setIndex(item.getIndex());
+    private Form.Question buildQuestion(AnswerDTO.Answer item) {
+        Form.Question question = new Form.Question();
+        question.setAnswer(item.getAnswer());
+        question.setObservation(item.getObservation());
+        question.setIndex(item.getIndex());
+        question.setTitle(item.getTitle());
+        return question;
+    }
 
-            if(item.getPatientName() != null) {
-                answer.setPatientName(item.getPatientName());
-            }
+    private void handleSpecialIndexes(AnswerDTO.Answer item) {
+        String index = item.getIndex();
 
-            if(item.getPatientPhone() != null) {
-                answer.setPatientPhone(item.getPatientPhone());
-            }
-
-            if(item.getIndex().equals("14")) {
-                answer.setDateOfAdmission(convertDateToTimestamp(item.getAnswer()));
-            }
-
-            if(item.getIndex().equals("15")) {
-                answer.setAnswerType(item.getAnswer());
-            }
-
-            if(item.getIndex().equals("16")) {
-                answer.setFeedbackReturn(Boolean.parseBoolean(item.getAnswer()));
-            }
-
-            questions.add(question);
+        if (DATE_OF_ADMISSION_INDEX.equals(index) && item.getAnswer() != null) {
+            answer.setDateOfAdmission(convertDateToTimestamp(item.getAnswer()));
         }
 
-        answer.setNpsId(npsId);
-        answer.setQuestions(questions);
-        answer.setTimestamp(System.currentTimeMillis());
+        if (ANSWER_TYPE_INDEX.equals(index)) {
+            answer.setAnswerType(item.getAnswer());
+        }
     }
 
-    private Long convertDateToTimestamp(String answer) {
+    private boolean isLowNpsScore(AnswerDTO.Answer item) {
+        try {
+            return Integer.parseInt(item.getAnswer()) < LOW_NPS_THRESHOLD;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private void sendEmailToManager(Form.Question question) throws MessagingException {
+        emailService.sendEmailToManager(question, answer);
+    }
+
+    private Long convertDateToTimestamp(String date) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate localDate = LocalDate.parse(answer, formatter);
+        LocalDate localDate = LocalDate.parse(date, formatter);
         return localDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
-
 }

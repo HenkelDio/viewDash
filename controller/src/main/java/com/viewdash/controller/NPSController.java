@@ -6,11 +6,10 @@ import com.viewdash.service.NPSService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 @Controller
 @RequestMapping("nps")
@@ -28,17 +27,32 @@ public class NPSController {
     }
 
     @GetMapping("get-nps")
-    public ResponseEntity<?> getNPS(@AuthenticationPrincipal User principal) {
-        return npsService.getNps(principal);
+    public ResponseEntity<?> getNPS(@AuthenticationPrincipal User principal, @RequestHeader long startDate, @RequestHeader long endDate) {
+        return npsService.getNps(principal, startDate, endDate);
     }
 
     @GetMapping("count-answers")
-    public ResponseEntity<?> countAnswers() {
-        return npsService.countAnswers();
+    public ResponseEntity<?> countAnswers(@RequestHeader long startDate, @RequestHeader long endDate, @RequestHeader(required = false) String departmentId) {
+        return npsService.countAnswers(startDate, endDate, departmentId);
     }
 
     @GetMapping("count-feedback-returns")
     public ResponseEntity<?> countFeedbackReturns() {
         return npsService.countFeedbackReturns();
+    }
+
+    @GetMapping("get-answers")
+    public ResponseEntity<?> getAnswers(@RequestParam String sortBy, @RequestParam String npsId, @RequestHeader long startDate, @RequestHeader long endDate) {
+        return npsService.getAnswers(sortBy, npsId, startDate, endDate);
+    }
+
+    @GetMapping("get-score-departments")
+    public ResponseEntity<?> getScoreDepartments(@RequestHeader long startDate, @RequestHeader long endDate) {
+        return npsService.getScoreDepartments(startDate, endDate);
+    }
+
+    @GetMapping("get-all-answers")
+    public ResponseEntity<?> getAllAnswers(@RequestHeader long startDate, @RequestHeader long endDate, @RequestHeader(required = false) String departmentId, @RequestParam int pageNumber) {
+        return npsService.getAllAnswers(startDate, endDate, departmentId, pageNumber);
     }
 }

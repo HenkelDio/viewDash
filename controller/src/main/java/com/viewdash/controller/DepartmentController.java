@@ -18,6 +18,11 @@ public class DepartmentController {
         return departmentService.createDepartment(department);
     }
 
+    @PutMapping
+    public ResponseEntity<?> updateDepartment(@RequestBody Department department) {
+        return departmentService.updateDepartment(department);
+    }
+
     @GetMapping("find-all")
     public ResponseEntity<?> findAllDepartments(@RequestParam String status) {
         return departmentService.findAllDepartments(status);
