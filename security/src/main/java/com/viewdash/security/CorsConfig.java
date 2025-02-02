@@ -17,8 +17,8 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         List<String> allowedOrigins = Arrays.asList(
-                "https://dashview-iota.vercel.app",
-                "http://localhost:9000"
+                "http://localhost:9000",
+                "https://dashview-iota.vercel.app"
         );
 
         configuration.setAllowedOrigins(allowedOrigins);
