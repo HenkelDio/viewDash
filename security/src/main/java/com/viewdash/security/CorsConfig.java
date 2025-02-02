@@ -16,12 +16,10 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        List<String> allowedOrigins = Arrays.asList(
-                "https://dashview-iota.vercel.app",
-                "http://localhost:9000"
-        );
-
-        configuration.setAllowedOrigins(allowedOrigins);
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:9000",
+                "https://dashview-iota.vercel.app"
+        ));
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);
