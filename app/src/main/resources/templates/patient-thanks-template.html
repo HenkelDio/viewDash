@@ -19,12 +19,8 @@
             overflow: hidden;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        .logo {
-            text-align: center;
-            padding: 20px;
-        }
         .header {
-            background-color: #003cff;
+            background-color: #1b1e3a;
             color: #ffffff;
             text-align: center;
             padding: 20px;
@@ -32,19 +28,28 @@
         .header h1 {
             margin: 0;
             font-size: 24px;
-            font-weight: bold;
         }
         .content {
             padding: 20px;
             color: #333333;
         }
-        .content h2 {
+        .content h1 {
             font-size: 20px;
             color: #003cff;
         }
         .content p {
             line-height: 1.6;
             margin: 10px 0;
+        }
+        .content a.button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #003cff;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 4px;
+            margin-top: 20px;
         }
         .footer {
             background-color: #f4f4f9;
@@ -61,7 +66,6 @@
 </head>
 <body>
 <div class="email-container">
-
     <!-- Header -->
     <div class="header">
         <h1>Hospital Clínica Los Angeles</h1>
@@ -69,10 +73,14 @@
 
     <!-- Content -->
     <div class="content">
-        <h2>Houve um detrator na pesquisa respondida!</h2>
-        <p><strong>Pergunta:</strong> [[${question}]]</p>
-        <p><strong>Nota:</strong> [[${answer}]]</p>
-        <p><strong>Observação:</strong> [[${observation}]]</p>
+        <h1>Prezado(a) [[${patientName}]],</h1>
+        <p>Agradecemos pela sua participação na pesquisa de satisfação do Hospital Clínica Los Angeles. Sua opinião é valiosa para aprimorarmos nossos serviços. Caso tenha solicitado retorno, um de nossos colaboradores entrará em contato em breve. Estamos à disposição para dúvidas e agradecemos por fazer parte do nosso Programa de Experiência do Paciente.</p>
+
+        <p>Fique à vontade para incluir todas as suas considerações na avaliação e, caso deseje um retorno, por favor, sinalize no formulário. Entraremos em contato o mais breve possível.</p>
+
+        <p>Estamos à disposição para qualquer necessidade.</p>
+
+        <p>Atenciosamente,</p>
     </div>
 
     <!-- Footer -->

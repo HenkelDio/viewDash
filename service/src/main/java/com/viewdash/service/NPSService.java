@@ -2,19 +2,27 @@ package com.viewdash.service;
 
 import com.viewdash.document.*;
 import jakarta.mail.MessagingException;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 public class NPSService extends AbstractService {
@@ -30,7 +38,7 @@ public class NPSService extends AbstractService {
 
     public ResponseEntity<?> sendNps(MultipartFile file, User principal) throws Exception {
         try {
-            processCSV(file, principal);
+            processXLS(file, principal);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error");
@@ -54,19 +62,36 @@ public class NPSService extends AbstractService {
             query.addCriteria(Criteria.where("departmentId").is(departmentId));
         }
 
-        Map<String, Long> totalScore = getTotalScore(query, answersQuery);
+        Map<String, Long> totalScore = Objects.nonNull(departmentId) ? getTotalScoreByDepartment(query, answersQuery) : getTotalScore(query, answersQuery);
         return ResponseEntity.ok(totalScore);
     }
 
 
-    private Map<String, Long> getTotalScore(Query query, Query answersQuery) {
-        List<Chart> answers = mongoTemplate.find(query, Chart.class);
-        long totalAnswers = mongoTemplate.count(answersQuery, Answer.class);
+    private Map<String, Long> getTotalScoreByDepartment(Query query, Query answersQuery) {
+        List<DepartmentChart> answers = mongoTemplate.find(query, DepartmentChart.class);
+//        long totalAnswers = answers.stream()
+//                .map(DepartmentChart::getAnswerId)
+//                .distinct()
+//                .count();
 
         Map<String, Long> result = Map.of(
                 "detractors", answers.stream().filter(item -> item.getScore().equals("DETRACTOR")).count(),
                 "neutrals", answers.stream().filter(item -> item.getScore().equals("NEUTRAL")).count(),
-                "promoters", answers.stream().filter(item -> item.getScore().equals("PROMOTER")).count(),
+                "promoters", answers.stream().filter(item -> item.getScore().equals("PROMOTER")).count()
+        );
+
+        return result;
+    }
+
+
+    private Map<String, Long> getTotalScore(Query query, Query answersQuery) {
+        List<Answer> answers = mongoTemplate.find(query, Answer.class);
+        long totalAnswers = mongoTemplate.count(answersQuery, Answer.class);
+
+        Map<String, Long> result = Map.of(
+                "detractors", answers.stream().filter(item -> item.getScore().getScore().equals("DETRACTOR")).count(),
+                "neutrals", answers.stream().filter(item -> item.getScore().getScore().equals("NEUTRAL")).count(),
+                "promoters", answers.stream().filter(item -> item.getScore().getScore().equals("PROMOTER")).count(),
                 "total", totalAnswers
         );
 
@@ -79,36 +104,37 @@ public class NPSService extends AbstractService {
         return ResponseEntity.ok(mongoTemplate.count(new Query(Criteria.where("feedbackReturn").is(true)), Answer.class));
     }
 
-    public void processCSV(MultipartFile file, User principal) throws Exception {
+
+    public void processXLS(MultipartFile file, User principal) throws Exception {
         logger.info("Processing NPS " + principal.getDocument());
 
         String fileType = file.getContentType();
-        if (fileType == null || !fileType.equals("text/csv")) {
-            throw new Exception("Invalid file type. Only CSV files are allowed.");
+        if (fileType == null || (!fileType.equals("application/vnd.ms-excel") && !fileType.equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))) {
+            throw new Exception("Invalid file type. Only Excel files are allowed.");
         }
 
         List<PatientNps> patients = new ArrayList<>();
         Set<String> uniqueEmails = new HashSet<>();
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
-            String line;
-            boolean isFirstLine = true;
+        try (InputStream inputStream = file.getInputStream(); Workbook workbook = file.getOriginalFilename().endsWith(".xls") ? new HSSFWorkbook(inputStream) : new XSSFWorkbook(inputStream)) {
+            Sheet sheet = workbook.getSheetAt(0);
+            Iterator<Row> rowIterator = sheet.iterator();
 
-            while ((line = br.readLine()) != null) {
-                if (isFirstLine) {
-                    isFirstLine = false;
-                    continue;
+            boolean isFirstRow = true;
+            while (rowIterator.hasNext()) {
+                Row row = rowIterator.next();
+                if (isFirstRow) {
+                    isFirstRow = false;
+                    continue; // Pular cabeçalho
                 }
 
-                String[] columns = line.split(",");
-                if (columns.length != 2) {
-                    throw new Exception("Invalid CSV format. Each row must have exactly two columns.");
-                }
+                Cell emailCell = row.getCell(22, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                Cell nameCell = row.getCell(3, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
 
-                String email = columns[0].trim();
-                String nome = columns[1].trim();
+                String email = emailCell.toString().trim();
+                String nome = nameCell.toString().trim();
 
-                if (!uniqueEmails.contains(email)) {
+                if (!email.isEmpty() && !uniqueEmails.contains(email)) {
                     uniqueEmails.add(email);
                     PatientNps patientNps = new PatientNps();
                     patientNps.setEmail(email);
@@ -128,16 +154,27 @@ public class NPSService extends AbstractService {
         nps.setPatientNpsList(patients);
         mongoTemplate.save(nps);
 
-        logger.info("Sending NPS " + principal.getDocument());
-        patients.forEach(document -> {
-            try {
-                emailService.sendNpsEmail(document, nps.getId());
-            } catch (MessagingException e) {
-                throw new RuntimeException(e);
-            }
-        });
 
+        ExecutorService executorService = Executors.newFixedThreadPool(10); // Limite de 10 threads
+
+        try {
+            logger.info("Sending NPS " + principal.getDocument());
+
+            for (PatientNps document : patients) {
+                executorService.submit(() -> {
+                    try {
+                        emailService.sendNpsEmail(document, nps.getId());
+                    } catch (MessagingException e) {
+                        logger.error("Error sending email to: " + document.getEmail(), e);
+                    }
+                });
+            }
+        } finally {
+            executorService.shutdown();
+        }
     }
+
+
 
     public ResponseEntity<?> getNps(User principal, long startDate, long endDate) {
         logger.info("Getting NPS {}", principal.getDocument());
@@ -175,6 +212,8 @@ public class NPSService extends AbstractService {
                 query.addCriteria(Criteria.where("timestamp").gte(startDate).lte(endDate));
             }
 
+            query.with(Sort.by(Sort.Direction.DESC, "timestamp"));
+
             return ResponseEntity.ok(mongoTemplate.find(query, Answer.class));
         } catch (Exception e) {
             e.printStackTrace();
@@ -202,21 +241,21 @@ public class NPSService extends AbstractService {
                 promoterQuery.addCriteria(dateCriteria);
             }
             promoterQuery.addCriteria(Criteria.where(DEPARTMENT_ID).is(department.getId()).and(SCORE).is("PROMOTER"));
-            promoters.put(department.getLabel(), mongoTemplate.count(promoterQuery, Chart.class));
+            promoters.put(department.getLabel(), mongoTemplate.count(promoterQuery, DepartmentChart.class));
 
             Query detractorQuery = new Query();
             if (dateCriteria != null) {
                 detractorQuery.addCriteria(dateCriteria);
             }
             detractorQuery.addCriteria(Criteria.where(DEPARTMENT_ID).is(department.getId()).and(SCORE).is("DETRACTOR"));
-            detractors.put(department.getLabel(), mongoTemplate.count(detractorQuery, Chart.class));
+            detractors.put(department.getLabel(), mongoTemplate.count(detractorQuery, DepartmentChart.class));
 
             Query neutralQuery = new Query();
             if (dateCriteria != null) {
                 neutralQuery.addCriteria(dateCriteria);
             }
             neutralQuery.addCriteria(Criteria.where(DEPARTMENT_ID).is(department.getId()).and(SCORE).is("NEUTRAL"));
-            neutrals.put(department.getLabel(), mongoTemplate.count(neutralQuery, Chart.class));
+            neutrals.put(department.getLabel(), mongoTemplate.count(neutralQuery, DepartmentChart.class));
         }
 
         Map<String, Map<String, Long>> results = Map.of(
@@ -244,31 +283,31 @@ public class NPSService extends AbstractService {
             query.addCriteria(Criteria.where("departmentId").is(departmentId));
         }
 
-        long totalDocuments = mongoTemplate.count(query, Chart.class);
+        long totalDocuments = mongoTemplate.count(query, DepartmentChart.class);
 
         int skip = (pageNumber - 1) * pageSize; // Cálculo do deslocamento
         query.skip(skip).limit(pageSize);
 
         query.with(Sort.by(Sort.Direction.DESC, "timestamp"));
 
-        List<Chart> charts = mongoTemplate.find(query, Chart.class);
+        List<DepartmentChart> departmentCharts = mongoTemplate.find(query, DepartmentChart.class);
 
 
         long totalPages = (long) Math.ceil((double) totalDocuments / pageSize);
 
         // Monta o payload
         List<Map<String, Object>> payload = new ArrayList<>();
-        for (Chart chart : charts) {
+        for (DepartmentChart departmentChart : departmentCharts) {
             Map<String, Object> payloadMap = new HashMap<>();
-            payloadMap.put("type", chart.getScore());
-            payloadMap.put("question", chart.getQuestionTitle());
-            payloadMap.put("timestamp", chart.getTimestamp());
+            payloadMap.put("type", departmentChart.getScore());
+            payloadMap.put("question", departmentChart.getQuestionTitle());
+            payloadMap.put("timestamp", departmentChart.getTimestamp());
 
-            if (Objects.nonNull(chart.getQuestionObservation())) {
-                payloadMap.put("observation", chart.getQuestionObservation());
+            if (Objects.nonNull(departmentChart.getQuestionObservation())) {
+                payloadMap.put("observation", departmentChart.getQuestionObservation());
             }
 
-            Answer answer = mongoTemplate.findById(chart.getAnswerId(), Answer.class);
+            Answer answer = mongoTemplate.findById(departmentChart.getAnswerId(), Answer.class);
             if (Objects.nonNull(answer)) {
                 payloadMap.put("dateOfAdmission", answer.getDateOfAdmission());
 
@@ -289,4 +328,23 @@ public class NPSService extends AbstractService {
         return ResponseEntity.ok(response);
     }
 
+    public ResponseEntity<?> setRequestAnswered(String answerId, User principal) {
+        logger.info("Set request answered {}", answerId);
+
+        try {
+            Answer.RequestAnswered requestAnswered = new Answer.RequestAnswered();
+            requestAnswered.setTimestamp(System.currentTimeMillis());
+            requestAnswered.setUsername(principal.getDocument());
+
+            mongoTemplate.updateFirst(
+                    new Query(Criteria.where("_id").is(answerId)),
+                    new Update().set("requestAnswered", requestAnswered), Answer.class);
+
+            logger.info("Request answered successfully {}", answerId);
+            return ResponseEntity.ok("Request answered successfully");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
 }

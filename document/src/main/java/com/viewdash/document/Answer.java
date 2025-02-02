@@ -20,17 +20,26 @@ public class Answer {
     private List<Form.Question> questions;
     private String patientName;
     private String patientPhone;
+    private String patientEmail;
     private Long dateOfAdmission;
     private String type;
     private String answerType;
     private boolean feedbackReturn;
     private String npsId;
     private RequestAnswered requestAnswered;
+    private Score score;
 
     @Getter
     @Setter
     public static class RequestAnswered implements Serializable {
         private String username;
-        private String timestamp;
+        private long timestamp;
+    }
+
+    @Getter
+    @Setter
+    public static class Score implements Serializable {
+        private String score;
+        private String answer;
     }
 }

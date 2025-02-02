@@ -24,7 +24,7 @@ public class PublicFormController {
     }
 
     @PostMapping("save-answer")
-    public ResponseEntity<Form> saveAnswer(@RequestBody AnswerDTO answerDTO, @RequestParam("token") String npsId) throws MessagingException {
+    public ResponseEntity<Form> saveAnswer(@RequestBody AnswerDTO answerDTO, @RequestParam(value = "token", required = false) String npsId) throws MessagingException {
         return publicFormService.saveAnswer(answerDTO, npsId);
     }
 

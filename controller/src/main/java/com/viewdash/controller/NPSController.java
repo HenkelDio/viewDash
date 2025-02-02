@@ -55,4 +55,9 @@ public class NPSController {
     public ResponseEntity<?> getAllAnswers(@RequestHeader long startDate, @RequestHeader long endDate, @RequestHeader(required = false) String departmentId, @RequestParam int pageNumber) {
         return npsService.getAllAnswers(startDate, endDate, departmentId, pageNumber);
     }
+
+    @PutMapping("set-request-answered")
+    public ResponseEntity<?> setRequestAnswered(@RequestHeader String answerId, @AuthenticationPrincipal User principal) {
+        return npsService.setRequestAnswered(answerId, principal);
+    }
 }

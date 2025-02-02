@@ -4,15 +4,81 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .logo {
+            text-align: center;
+            padding: 20px;
+        }
+        .header {
+            background-color: #003cff;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .content {
+            padding: 20px;
+            color: #333333;
+        }
+        .content h2 {
+            font-size: 20px;
+            color: #003cff;
+        }
+        .content p {
+            line-height: 1.6;
+            margin: 10px 0;
+        }
+        .footer {
+            background-color: #f4f4f9;
+            color: #666666;
+            text-align: center;
+            padding: 15px;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #003cff;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
-<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-    <p>Houve um defrator na pesquisa respondida!</p>
-    <p>Pergunta: [[${question}]]</p>
-    <p>Nota: [[${answer}]]</p>
-    <p>[[${observation}]]</p>
-    <p>Nome do paciente: [[${patientName}]]</p>
-    <p>Telefone do paciente: [[${patientPhone}]]</p>
+<div class="email-container">
+    <!-- Header -->
+    <div class="header">
+        <h1>Hospital Clínica Los Angeles</h1>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <h2>Houve um detrator na pesquisa respondida!</h2>
+        <p><strong>Pergunta:</strong> [[${question}]]</p>
+        <p><strong>Nota:</strong> [[${answer}]]</p>
+        <p><strong>Observação:</strong> [[${observation}]]</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>&copy; 2025 Hospital Clínica Los Angeles. Todos os direitos reservados.</p>
+        <p><a href="mailto:ouvidoria@clinicalosangeles.com.br">ouvidoria@clinicalosangeles.com.br</a></p>
+    </div>
 </div>
 </body>
 </html>

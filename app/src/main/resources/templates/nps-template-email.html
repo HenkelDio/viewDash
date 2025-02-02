@@ -4,26 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background-color: #1b1e3a;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+            color: #333333;
+        }
+        .content h1 {
+            font-size: 20px;
+            color: #003cff;
+        }
+        .content p {
+            line-height: 1.6;
+            margin: 10px 0;
+        }
+        .content a.button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #003cff;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .footer {
+            background-color: #f4f4f9;
+            color: #666666;
+            text-align: center;
+            padding: 15px;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #003cff;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
-<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-    <h1>Olá, [[${name}]]</h1>
-    <p>Você tem um minuto para uma pesquisa?</p>
-    <p>Responda a pesquisa de satisfação da Clínica Los Angeles!</p>
+<div class="email-container">
+    <!-- Header -->
+    <div class="header">
+        <h1>Hospital Clínica Los Angeles</h1>
+    </div>
 
-    <a th:href="@{'https://dashview-iota.vercel.app/form?token=' + ${token}}"
-       style="padding: 10px; background-color: rgb(0, 60, 255); color: white; border: none; font-weight: bold; text-decoration: none;">
-        RESPONDER PESQUISA DE SATISFAÇÃO
-    </a>
+    <!-- Content -->
+    <div class="content">
+        <h1>Prezado(a) cliente,</h1>
+        <p>Agradecemos por escolher o Hospital Clínica Los Angeles e nos permitir acompanhá-lo(a) durante este momento. Sua opinião é de extrema importância para nós, e acreditamos que o seu feedback sobre a experiência vivida contribuirá para aprimorar nossos serviços e proporcionar um atendimento ainda mais eficiente e humanizado.</p>
 
-    <p>Ou copie e cole este link no navegador:</p>
-    <p>
-        <a th:href="@{'https://dashview-iota.vercel.app/form?token=' + ${token}}">
-            https://dashview-iota.vercel.app/form?token=[[${token}]]
-        </a>
-    </p>
+        <p>Fique à vontade para incluir todas as suas considerações na avaliação e, caso deseje um retorno, por favor, sinalize no formulário. Entraremos em contato o mais breve possível.</p>
 
-    <p>Obrigado!</p>
+        <p>Estamos à disposição para qualquer necessidade.</p>
+
+        <p>Atenciosamente,</p>
+
+        <a href="https://dashview-iota.vercel.app/form?token=[[${token}]]" class="button">RESPONDER PESQUISA DE SATISFAÇÃO</a>
+
+        <p>Ou copie e cole este link no navegador:</p>
+        <p>
+            <a href="https://dashview-iota.vercel.app/form?token=[[${token}]]">https://dashview-iota.vercel.app/form?token=[[${token}]]</a>
+        </p>
+
+        <p>Obrigado!</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>&copy; 2025 Hospital Clínica Los Angeles. Todos os direitos reservados.</p>
+        <p><a href="mailto:ouvidoria@clinicalosangeles.com.br">ouvidoria@clinicalosangeles.com.br</a></p>
+    </div>
 </div>
 </body>
 </html>

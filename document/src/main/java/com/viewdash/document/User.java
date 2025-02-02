@@ -36,6 +36,11 @@ public class User implements Serializable {
     @Setter
     public static class Permissions implements Serializable {
         private boolean firstLogin;
+        private boolean sendNps;
+        private boolean viewAnswers;
+        private boolean viewDashboard;
+        private boolean viewAndEditUsers;
+        private boolean viewAndEditDepartments;
     }
 
     public enum STATUS {

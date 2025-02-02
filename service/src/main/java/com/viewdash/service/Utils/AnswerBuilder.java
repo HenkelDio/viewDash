@@ -1,10 +1,10 @@
 package com.viewdash.service.utils;
 
 import com.viewdash.document.Answer;
-import com.viewdash.document.Chart;
 import com.viewdash.document.DTO.AnswerDTO;
 import com.viewdash.document.Form;
 import com.viewdash.service.EmailService;
+import com.viewdash.service.Utils.Utils;
 import jakarta.mail.MessagingException;
 import lombok.Getter;
 
@@ -13,14 +13,15 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class AnswerBuilder {
 
     private static final String DATE_OF_ADMISSION_INDEX = "15";
     private static final String ANSWER_TYPE_INDEX = "16";
+    private static final String ANSWER_TYPE_SCORE = "13";
     private static final int LOW_NPS_THRESHOLD = 6;
 
     private final AnswerDTO answerDTO;
@@ -50,10 +51,11 @@ public class AnswerBuilder {
         answer.setFeedbackReturn(answerDTO.getPatientInfo().isPatientFeedbackReturn());
         answer.setPatientName(answerDTO.getPatientInfo().getPatientName());
         answer.setPatientPhone(answerDTO.getPatientInfo().getPatientPhone());
+        answer.setPatientEmail(answerDTO.getPatientInfo().getPatientEmail());
     }
 
     private void processAnswers() {
-        ExecutorService executorService = Executors.newCachedThreadPool(); // Pool de threads escalável
+        ExecutorService executorService = Executors.newFixedThreadPool(10); // Melhor controle de threads
 
         try {
             for (AnswerDTO.Answer item : answerDTO.getAnswers()) {
@@ -62,19 +64,38 @@ public class AnswerBuilder {
                 questions.add(question);
 
                 if (isLowNpsScore(item)) {
-                    executorService.submit(() -> {
-                        try {
-                            sendEmailToManager(question);
-                        } catch (MessagingException e) {
-                            System.err.println("Erro ao enviar e-mail para o gerente: " + e.getMessage());
-                            e.printStackTrace();
-                        }
-                    });
+                    sendEmail(executorService, question);
                 }
             }
         } finally {
-            executorService.shutdown(); // Garante que o pool será fechado após o uso
+            executorService.shutdown();
+            try {
+                if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+                    executorService.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executorService.shutdownNow();
+            }
         }
+
+        try {
+            if(answer.getPatientEmail() != null) {
+                emailService.sendPatientEmail(answer.getPatientEmail(), answer.getPatientName());
+            }
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void sendEmail(ExecutorService executorService, Form.Question question) {
+        executorService.submit(() -> {
+            try {
+                sendEmailToManager(question);
+            } catch (MessagingException e) {
+               e.printStackTrace();
+            }
+        });
     }
 
 
@@ -94,6 +115,16 @@ public class AnswerBuilder {
             answer.setDateOfAdmission(convertDateToTimestamp(item.getAnswer()));
         }
 
+        if (ANSWER_TYPE_SCORE.equals(index)) {
+            Answer.Score answerScore = new Answer.Score();
+            answerScore.setAnswer(item.getAnswer());
+            answerScore.setScore(Utils.getScore(item.getAnswer()));
+            answer.setScore(answerScore);
+        }
+
+        if (ANSWER_TYPE_INDEX.equals(index)) {
+            answer.setAnswerType(item.getAnswer());
+        }
         if (ANSWER_TYPE_INDEX.equals(index)) {
             answer.setAnswerType(item.getAnswer());
         }

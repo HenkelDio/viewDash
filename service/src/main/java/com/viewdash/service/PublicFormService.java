@@ -1,19 +1,18 @@
 package com.viewdash.service;
 
 import com.viewdash.document.Answer;
-import com.viewdash.document.Chart;
+import com.viewdash.document.DepartmentChart;
 import com.viewdash.document.DTO.AnswerDTO;
 import com.viewdash.document.Form;
+import com.viewdash.service.Utils.Utils;
 import jakarta.mail.MessagingException;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class PublicFormService extends AbstractService {
@@ -56,14 +55,14 @@ public class PublicFormService extends AbstractService {
 
                 if(questionFound.getDepartmentIds() != null && !questionFound.getDepartmentIds().isEmpty()) {
                     for(String departmentId : questionFound.getDepartmentIds()) {
-                        Chart chart = new Chart();
-                        chart.setAnswerId(answer.getId());
-                        chart.setDepartmentId(departmentId);
-                        chart.setScore(getScore(question.getAnswer()));
-                        chart.setTimestamp(answer.getTimestamp());
-                        chart.setQuestionTitle(questionFound.getTitle());
-                        chart.setQuestionObservation(question.getObservation());
-                        mongoTemplate.save(chart);
+                        DepartmentChart departmentChart = new DepartmentChart();
+                        departmentChart.setAnswerId(answer.getId());
+                        departmentChart.setDepartmentId(departmentId);
+                        departmentChart.setScore(Utils.getScore(question.getAnswer()));
+                        departmentChart.setTimestamp(answer.getTimestamp());
+                        departmentChart.setQuestionTitle(questionFound.getTitle());
+                        departmentChart.setQuestionObservation(question.getObservation());
+                        mongoTemplate.save(departmentChart);
                     }
                 }
             }
@@ -76,17 +75,4 @@ public class PublicFormService extends AbstractService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Question with index " + index + " not found."));
     }
-
-    private String getScore(String answer) {
-        int score = Integer.parseInt(answer);
-        if (score <= 6) {
-            return "DETRACTOR";
-        } else if (score <= 8) {
-            return "NEUTRAL";
-        }
-
-        return "PROMOTER";
-    }
-
-
 }

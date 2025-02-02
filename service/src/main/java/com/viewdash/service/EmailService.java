@@ -48,7 +48,7 @@ public class EmailService {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
 
         MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-        helper.setFrom("ViewDash");
+        helper.setFrom("ouvidoria@clinicalosangeles.com.br");
         helper.setTo(toEmail);
         helper.setSubject(subject);
 
@@ -74,7 +74,7 @@ public class EmailService {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
-            helper.setFrom("ViewDash");
+            helper.setFrom("ouvidoria@clinicalosangeles.com.br");
             helper.setSubject("NPS Defrator");
 
             Context context = prepareEmailContext(questionFound, question, answer);
@@ -112,7 +112,7 @@ public class EmailService {
     private void sendEmailsToDepartments(
             List<Department> departments, MimeMessage mimeMessage, MimeMessageHelper helper, Context context, Answer answer
     ) {
-        String template = answer.isFeedbackReturn() ? "manager-deflator-template" : "manager-deflator-unknown-template";
+        String template = "manager-deflator-template";
 
         departments.forEach(department -> {
             if(department.getEmailManager() != null) {
@@ -128,6 +128,24 @@ public class EmailService {
             }
         });
     }
+
+    public void sendPatientEmail(String patientEmail, String patientName) throws MessagingException {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+        helper.setFrom("ouvidoria@clinicalosangeles.com.br");
+        helper.setTo(patientEmail);
+
+        Context context = new Context();
+        context.setVariable("patientName", patientName);
+        String htmlContent = templateEngine.process("patient-thanks-template", context);
+
+        helper.setText(htmlContent, true);
+        helper.setSubject("Agradecemos pela sua participação");
+
+        mailSender.send(mimeMessage);
+    }
+
 
 
     private record Result(MimeMessage mimeMessage, MimeMessageHelper helper, Context context) {

@@ -6,12 +6,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.io.Serializable;
-import java.util.List;
 
 @Getter
 @Setter
-@Document(collection = "chart")
-public class Chart implements Serializable {
+@Document(collection = "departmentchart")
+public class DepartmentChart implements Serializable {
 
     @Id
     private String id;

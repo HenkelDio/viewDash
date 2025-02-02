@@ -27,5 +27,6 @@ public class AnswerDTO {
         private String patientName;
         private String patientPhone;
         private boolean patientFeedbackReturn;
+        private String patientEmail;
     }
 }

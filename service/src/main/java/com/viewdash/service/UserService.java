@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -55,21 +56,16 @@ public class UserService {
 
         try {
 
-            Optional<User> userOptional = userRepository.findByDocument(user.getDocument())
-                    .or(() -> userRepository.findByEmail(user.getEmail()));
+            user.setDocument(user.getDocument().replace("-", "").replace(".", ""));
+
+            Optional<User> userOptional = userRepository.findByEmailOrDocument(user.getEmail(), user.getDocument());
 
             if(userOptional.isPresent()) {
                 logger.info("user already exists");
                 return ResponseEntity.badRequest().build();
             }
 
-            user.setDocument(user.getDocument().replace("-", "").replace(".", ""));
             user.setStatus(User.STATUS.ACTIVE);
-
-            User.Permissions permissions = new User.Permissions();
-            permissions.setFirstLogin(true);
-            user.setPermissions(permissions);
-
             userRepository.save(user);
 
             logger.info("user created, sending email");
@@ -90,12 +86,29 @@ public class UserService {
         user.setDocument(user.getDocument().replace("-", "").replace(".", ""));
         Optional<User> userOptional = userRepository.findByDocument(user.getDocument());
         if(userOptional.isPresent()) {
+
+            if(!user.getEmail().equals(userOptional.get().getEmail())) {
+                Optional<User> emailAlreadyExists = userRepository.findByEmail(user.getEmail());
+
+                if(emailAlreadyExists.isPresent()) {
+                    logger.info("user already exists");
+                    return ResponseEntity.badRequest().build();
+                }
+            }
+
             Query query = new Query(Criteria.where("document").is(user.getDocument()));
             Update update = new Update();
             update.set("name", user.getName());
             update.set("email", user.getEmail());
-            update.set("departments", user.getDepartments());
             update.set("role", user.getRole());
+
+            if(Objects.nonNull(user.getDepartments())) {
+                update.set("departments", user.getDepartments());
+            }
+
+            if(Objects.nonNull(user.getPermissions())) {
+                update.set("permissions", user.getPermissions());
+            }
 
             mongoTemplate.updateFirst(query, update, User.class);
             return ResponseEntity.ok(user);
