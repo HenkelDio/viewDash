@@ -22,7 +22,7 @@ public class AnswerBuilder {
     private static final String DATE_OF_ADMISSION_INDEX = "15";
     private static final String ANSWER_TYPE_INDEX = "16";
     private static final String ANSWER_TYPE_SCORE = "13";
-    private static final int LOW_NPS_THRESHOLD = 6;
+    private static final int LOW_NPS_THRESHOLD = 7;
 
     private final AnswerDTO answerDTO;
     @Getter

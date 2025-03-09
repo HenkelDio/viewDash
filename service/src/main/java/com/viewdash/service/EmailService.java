@@ -118,7 +118,8 @@ public class EmailService {
             if(department.getEmailManager() != null) {
                 try {
                     helper.setTo(department.getEmailManager());
-                    helper.setCc("ouvidoria@clinicalosangeles.com.br");
+                    helper.setCc(new String[]{"ouvidoria@clinicalosangeles.com.br"});
+
                     String htmlContent = templateEngine.process(template, context);
                     helper.setText(htmlContent, true);
                     mailSender.send(mimeMessage);
