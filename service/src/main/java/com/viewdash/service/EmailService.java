@@ -68,20 +68,35 @@ public class EmailService {
 
         Form.Question questionFound = findQuestionByIndex(form, question.getIndex());
 
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+        helper.setFrom("ouvidoria@clinicalosangeles.com.br");
+        helper.setSubject("NPS Defrator");
+
+        Context context = prepareEmailContext(questionFound, question, answer);
+
         if(Objects.nonNull((questionFound.getDepartmentIds()))) {
             List<Department> departments = findDepartmentsByIds(questionFound.getDepartmentIds());
-
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-
-            helper.setFrom("ouvidoria@clinicalosangeles.com.br");
-            helper.setSubject("NPS Defrator");
-
-            Context context = prepareEmailContext(questionFound, question, answer);
-
             sendEmailsToDepartments(departments, mimeMessage, helper, context, answer);
+        } else if (List.of("12", "13").contains(questionFound.getIndex())) {
+            sendEmailDefault(mimeMessage, helper, context, answer);
         }
 
+    }
+
+    private void sendEmailDefault(MimeMessage mimeMessage, MimeMessageHelper helper, Context context, Answer answer) {
+        String template = "manager-deflator-template";
+
+        try {
+            helper.setTo("ouvidoria@clinicalosangeles.com.br");
+            String htmlContent = templateEngine.process(template, context);
+            helper.setText(htmlContent, true);
+            mailSender.send(mimeMessage);
+        } catch (MessagingException e) {
+            System.err.println("Failed to send email to " + "ouvidoria@clinicalosangeles.com.br" + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private Form.Question findQuestionByIndex(Form form, String index) {

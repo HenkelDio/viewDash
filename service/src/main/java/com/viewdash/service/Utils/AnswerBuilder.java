@@ -79,7 +79,7 @@ public class AnswerBuilder {
         }
 
         try {
-            if(answer.getPatientEmail() != null) {
+            if(answer.getPatientEmail() != null && !answer.getPatientEmail().isEmpty()) {
                 emailService.sendPatientEmail(answer.getPatientEmail(), answer.getPatientName());
             }
         } catch (MessagingException e) {
