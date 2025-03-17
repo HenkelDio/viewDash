@@ -143,8 +143,13 @@ public class AnswerBuilder {
     }
 
     private Long convertDateToTimestamp(String date) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate localDate = LocalDate.parse(date, formatter);
-        return localDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate localDate = LocalDate.parse(date, formatter);
+            return localDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0L;
+        }
     }
 }
