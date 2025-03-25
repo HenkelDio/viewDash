@@ -21,8 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 @Service
 public class NPSService extends AbstractService {
@@ -36,12 +35,11 @@ public class NPSService extends AbstractService {
         this.emailService = emailService;
     }
 
-    public ResponseEntity<?> sendNps(MultipartFile file, User principal) throws Exception {
+    public ResponseEntity<List<String>> sendNps(MultipartFile file, User principal) throws Exception {
         try {
-            processXLS(file, principal);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(processXLS(file, principal));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error");
+            return ResponseEntity.internalServerError().build();
         }
     }
 
@@ -105,7 +103,7 @@ public class NPSService extends AbstractService {
     }
 
 
-    public void processXLS(MultipartFile file, User principal) throws Exception {
+    public List<String> processXLS(MultipartFile file, User principal) throws Exception {
         logger.info("Processing NPS " + principal.getDocument());
 
         String fileType = file.getContentType();
@@ -155,25 +153,43 @@ public class NPSService extends AbstractService {
         mongoTemplate.save(nps);
 
 
-        ExecutorService executorService = Executors.newFixedThreadPool(10); // Limite de 10 threads
+        return sendEmails(patients, nps);
 
+    }
+
+    private List<String> sendEmails(List<PatientNps> patients, Nps nps) throws ExecutionException {
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+        List<Callable<String>> tasks = new ArrayList<>();
+
+        for (PatientNps document : patients) {
+            tasks.add(() -> {
+                try {
+                    emailService.sendNpsEmail(document, nps.getId());
+                    return null; // Nenhum erro
+                } catch (MessagingException e) {
+                    logger.error("Error sending email to: " + document.getEmail(), e);
+                    return document.getEmail(); // Retorna o erro
+                }
+            });
+        }
+
+        List<String> errors = new ArrayList<>();
         try {
-            logger.info("Sending NPS " + principal.getDocument());
-
-            for (PatientNps document : patients) {
-                executorService.submit(() -> {
-                    try {
-                        emailService.sendNpsEmail(document, nps.getId());
-                    } catch (MessagingException e) {
-                        logger.error("Error sending email to: " + document.getEmail(), e);
-                    }
-                });
+            List<Future<String>> results = executorService.invokeAll(tasks);
+            for (Future<String> result : results) {
+                String error = result.get();
+                if (error != null) {
+                    errors.add(error);
+                }
             }
+        } catch (InterruptedException | ExecutionException e) {
+            logger.error("Thread execution interrupted", e);
         } finally {
             executorService.shutdown();
         }
-    }
 
+        return errors;
+    }
 
 
     public ResponseEntity<?> getNps(User principal, long startDate, long endDate) {
@@ -222,6 +238,8 @@ public class NPSService extends AbstractService {
     }
 
     public ResponseEntity<?> getScoreDepartments(long startDate, long endDate) {
+        logger.info("Getting score by departments");
+
         Criteria dateCriteria = null;
         if (startDate > 0 && endDate > 0) {
             long twentyFourHoursInMillis = 24 * 60 * 60 * 1000;

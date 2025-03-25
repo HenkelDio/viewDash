@@ -38,13 +38,15 @@ public class PublicFormService extends AbstractService {
         mongoTemplate.save(answerBuilder.getAnswer());
         saveChartInfo(answerBuilder.getAnswer(), answerBuilder.getQuestions());
 
+        logger.info("Form saved");
 
         return ResponseEntity.ok(new Form());
     }
 
     public void saveChartInfo(Answer answer, List<Form.Question> questions) {
         for(Form.Question question : questions) {
-            if(!INVALID_ANSWERS.contains(question.getAnswer())) {
+            String answerFinal = question.getAnswer();
+            if(!INVALID_ANSWERS.contains(question.getAnswer()) && !"N/A".equals(answerFinal)) {
 
                 Form form = mongoTemplate.findOne(new Query(Criteria.where("status").is("ACTIVE")), Form.class);
                 if (form == null) {

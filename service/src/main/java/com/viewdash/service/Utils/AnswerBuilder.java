@@ -55,7 +55,7 @@ public class AnswerBuilder {
     }
 
     private void processAnswers() {
-        ExecutorService executorService = Executors.newFixedThreadPool(10); // Melhor controle de threads
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
 
         try {
             for (AnswerDTO.Answer item : answerDTO.getAnswers()) {
@@ -63,7 +63,7 @@ public class AnswerBuilder {
                 handleSpecialIndexes(item);
                 questions.add(question);
 
-                if (isLowNpsScore(item)) {
+                if (!item.getAnswer().equals("N/A") && isLowNpsScore(item)) {
                     sendEmail(executorService, question);
                 }
             }
