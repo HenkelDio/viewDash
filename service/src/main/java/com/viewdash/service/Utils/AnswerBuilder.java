@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class AnswerBuilder {
 
@@ -56,6 +57,14 @@ public class AnswerBuilder {
 
     private void processAnswers() {
         ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+        answerDTO.setAnswers(answerDTO.getAnswers().stream().map(item -> {
+            if(item.getAnswer().isEmpty()) {
+                item.setAnswer("N/A");
+            }
+
+            return item;
+        }).toList());
 
         try {
             for (AnswerDTO.Answer item : answerDTO.getAnswers()) {
