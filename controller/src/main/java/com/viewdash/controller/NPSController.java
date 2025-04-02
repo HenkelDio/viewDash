@@ -60,4 +60,9 @@ public class NPSController {
     public ResponseEntity<?> setRequestAnswered(@RequestHeader String answerId, @AuthenticationPrincipal User principal) {
         return npsService.setRequestAnswered(answerId, principal);
     }
+
+    @GetMapping("report-by-question")
+    public ResponseEntity<?> reportByQuestion(@RequestHeader long startDate, @RequestHeader long endDate) {
+        return npsService.getReportByQuestion(startDate, endDate);
+    }
 }

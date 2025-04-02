@@ -76,8 +76,8 @@ public class EmailService {
 
         Context context = prepareEmailContext(questionFound, question, answer);
 
-        if(Objects.nonNull((questionFound.getDepartmentIds()))) {
-            List<Department> departments = findDepartmentsByIds(questionFound.getDepartmentIds());
+        if(Objects.nonNull((questionFound.getDepartmentEmails()))) {
+            List<Department> departments = findDepartmentsByIds(questionFound.getDepartmentEmails());
             sendEmailsToDepartments(departments, mimeMessage, helper, context, answer);
         } else if (List.of("12", "13").contains(questionFound.getIndex())) {
             sendEmailDefault(mimeMessage, helper, context, answer);

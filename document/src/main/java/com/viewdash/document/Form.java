@@ -27,6 +27,7 @@ public class Form implements Serializable {
         private String observation;
         private Boolean showObservation;
         private List<String> departmentIds;
+        private List<String> departmentEmails;
     }
 
     @Getter

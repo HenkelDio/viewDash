@@ -16,17 +16,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class NPSService extends AbstractService {
 
-    public static final Set<String> INVALID_ANSWERS = Set.of("14", "15", "16");
+    public static final Set<String> INVALID_ANSWERS = Set.of("14", "15", "16", "13", "12");
     public static final String SCORE = "score";
     public static final String DEPARTMENT_ID = "departmentId";
     private final EmailService emailService;
@@ -44,7 +43,7 @@ public class NPSService extends AbstractService {
     }
 
 
-    public ResponseEntity<Map<String, Long>> countAnswers(long startDate, long endDate, String departmentId) {
+    public ResponseEntity<Map<String, Object>> countAnswers(long startDate, long endDate, String departmentId) {
 
         long twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
         endDate += twentyFourHoursInMillis;
@@ -60,19 +59,17 @@ public class NPSService extends AbstractService {
             query.addCriteria(Criteria.where("departmentId").is(departmentId));
         }
 
-        Map<String, Long> totalScore = Objects.nonNull(departmentId) ? getTotalScoreByDepartment(query, answersQuery) : getTotalScore(query, answersQuery);
+        Map<String, Object> totalScore = Objects.nonNull(departmentId) ? getTotalScoreByDepartment(query) : getTotalScore(query, answersQuery);
         return ResponseEntity.ok(totalScore);
     }
 
 
-    private Map<String, Long> getTotalScoreByDepartment(Query query, Query answersQuery) {
+    private Map<String, Object> getTotalScoreByDepartment(Query query) {
         List<DepartmentChart> answers = mongoTemplate.find(query, DepartmentChart.class);
-//        long totalAnswers = answers.stream()
-//                .map(DepartmentChart::getAnswerId)
-//                .distinct()
-//                .count();
 
-        Map<String, Long> result = Map.of(
+        Map<String, Object> result = Map.of(
+                "title", answers.get(0).getQuestionTitle(),
+                "observations", answers.stream().filter(item -> !item.getQuestionObservation().equals("N/A") && !item.getQuestionObservation().isEmpty()).map(DepartmentChart::getQuestionObservation).toList(),
                 "detractors", answers.stream().filter(item -> item.getScore().equals("DETRACTOR")).count(),
                 "neutrals", answers.stream().filter(item -> item.getScore().equals("NEUTRAL")).count(),
                 "promoters", answers.stream().filter(item -> item.getScore().equals("PROMOTER")).count()
@@ -82,11 +79,11 @@ public class NPSService extends AbstractService {
     }
 
 
-    private Map<String, Long> getTotalScore(Query query, Query answersQuery) {
+    private Map<String, Object> getTotalScore(Query query, Query answersQuery) {
         List<Answer> answers = mongoTemplate.find(query, Answer.class);
         long totalAnswers = mongoTemplate.count(answersQuery, Answer.class);
 
-        Map<String, Long> result = Map.of(
+        Map<String, Object> result = Map.of(
                 "detractors", answers.stream().filter(item -> item.getScore().getScore().equals("DETRACTOR")).count(),
                 "neutrals", answers.stream().filter(item -> item.getScore().getScore().equals("NEUTRAL")).count(),
                 "promoters", answers.stream().filter(item -> item.getScore().getScore().equals("PROMOTER")).count(),
@@ -363,6 +360,35 @@ public class NPSService extends AbstractService {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
+    public ResponseEntity<List<Map<String, Object>>> getReportByQuestion(long startDate, long endDate) {
+        logger.info("Getting report by question {}", startDate);
+
+        long twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
+        endDate += twentyFourHoursInMillis;
+
+        Criteria criteria = new Criteria();
+        if (startDate > 0 && endDate > 0) {
+            criteria.and("timestamp").gte(startDate).lte(endDate);
+        }
+
+        try {
+            List<Form.Question> questions = mongoTemplate.findOne(new Query(Criteria.where("status").is("ACTIVE")), Form.class).getQuestions();
+            List<Map<String, Object>> result = new ArrayList<>();
+
+            questions.stream().filter(item -> !INVALID_ANSWERS.contains(item.getIndex())).forEach(question -> {
+                Query queryChart = new Query(Criteria.where("questionTitle").is(question.getTitle()));
+                queryChart.addCriteria(criteria);
+                result.add(getTotalScoreByDepartment(queryChart));
+            });
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error("Error occurred while getting report", e);
+            return ResponseEntity.internalServerError().build();
         }
     }
 }
