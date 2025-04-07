@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 public class NPSService extends AbstractService {
 
-    public static final Set<String> INVALID_ANSWERS = Set.of("14", "15", "16", "13", "12");
+    public static final Set<String> INVALID_ANSWERS = Set.of("14", "15", "16", "12", "13");
     public static final String SCORE = "score";
     public static final String DEPARTMENT_ID = "departmentId";
     private final EmailService emailService;
@@ -363,7 +363,7 @@ public class NPSService extends AbstractService {
         }
     }
 
-    public ResponseEntity<List<Map<String, Object>>> getReportByQuestion(long startDate, long endDate) {
+    public ResponseEntity<Map<String, Object>> getReportByQuestion(long startDate, long endDate) {
         logger.info("Getting report by question {}", startDate);
 
         long twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
@@ -376,19 +376,105 @@ public class NPSService extends AbstractService {
 
         try {
             List<Form.Question> questions = mongoTemplate.findOne(new Query(Criteria.where("status").is("ACTIVE")), Form.class).getQuestions();
-            List<Map<String, Object>> result = new ArrayList<>();
+            List<Map<String, Object>> resultByDepartment = new ArrayList<>();
+            List<String> reviews = new ArrayList<>();
+            Map<String, Object> resultManifest = new HashMap<>();
+            Map<String, Object> payload = new HashMap<>();
 
             questions.stream().filter(item -> !INVALID_ANSWERS.contains(item.getIndex())).forEach(question -> {
                 Query queryChart = new Query(Criteria.where("questionTitle").is(question.getTitle()));
                 queryChart.addCriteria(criteria);
-                result.add(getTotalScoreByDepartment(queryChart));
+                resultByDepartment.add(getTotalScoreByDepartment(queryChart));
             });
 
-            return ResponseEntity.ok(result);
+
+            List<Answer> answers = mongoTemplate.find(new Query(criteria), Answer.class);
+            for (Answer answer : answers) {
+                getReviews(answer, reviews);
+            }
+
+            getResultIndex13And12(answers, resultByDepartment);
+
+            resultManifest.put("title", "Tipo de manifestação");
+            resultManifest.put("compliments", answers.stream().filter(item -> item.getAnswerType().equals("Elogio")).count());
+            resultManifest.put("suggestions", answers.stream().filter(item -> item.getAnswerType().equals("Sugestão")).count());
+            resultManifest.put("complaints", answers.stream().filter(item -> item.getAnswerType().equals("Reclamação")).count());
+
+
+            payload.put("department", resultByDepartment);
+            payload.put("reviews", reviews);
+            payload.put("manifest", resultManifest);
+
+            return ResponseEntity.ok(payload);
         } catch (Exception e) {
             e.printStackTrace();
             logger.error("Error occurred while getting report", e);
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    private void getResultIndex13And12(List<Answer> answers, List<Map<String, Object>> resultByDepartment) {
+        List<Form.Question> index13 = answers.stream()
+                .flatMap(q -> q.getQuestions().stream())
+                .filter(item -> "13".equals(item.getIndex()))
+                .toList();
+
+        List<Form.Question> index12 = answers.stream()
+                .flatMap(q -> q.getQuestions().stream())
+                .filter(item -> "12".equals(item.getIndex()))
+                .toList();
+
+        if (!index13.isEmpty()) {
+            Map<String, Object> resultIndex13 = Map.of(
+                    "title", index13.get(0).getTitle(),
+                    "detractors", index13.stream().filter(item -> parseScore(item.getAnswer()) <= 6).count(),
+                    "neutrals", index13.stream().filter(item -> {
+                        int score = parseScore(item.getAnswer());
+                        return score >= 7 && score <= 8;
+                    }).count(),
+                    "promoters", index13.stream().filter(item -> parseScore(item.getAnswer()) > 8).count(),
+                    "observations", index13.stream()
+                            .map(Form.Question::getObservation)
+                            .filter(obs -> obs != null && !obs.isEmpty() && !"N/A".equalsIgnoreCase(obs))
+                            .toList()
+            );
+            resultByDepartment.add(resultIndex13);
+        }
+    
+        if (!index12.isEmpty()) {
+            Map<String, Object> resultIndex12 = Map.of(
+                    "title", index12.get(0).getTitle(),
+                    "detractors", index12.stream().filter(item -> parseScore(item.getAnswer()) <= 6).count(),
+                    "neutrals", index12.stream().filter(item -> {
+                        int score = parseScore(item.getAnswer());
+                        return score >= 7 && score <= 8;
+                    }).count(),
+                    "promoters", index12.stream().filter(item -> parseScore(item.getAnswer()) > 8).count(),
+                    "observations", index12.stream()
+                            .map(Form.Question::getObservation)
+                            .filter(obs -> obs != null && !obs.isEmpty() && !"N/A".equalsIgnoreCase(obs))
+                            .toList()
+            );
+            resultByDepartment.add(resultIndex12);
+        }
+    }
+
+    private int parseScore(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return -1; // Valor inválido
+        }
+    }
+
+    private void getReviews(Answer answer, List<String> reviews) {
+        for (Form.Question question : answer.getQuestions()) {
+            if (!"14".equals(question.getIndex())) continue;
+
+            String response = question.getAnswer();
+            if (response == null || response.isEmpty() || "N/A".equalsIgnoreCase(response)) continue;
+
+            reviews.add(response);
         }
     }
 }
