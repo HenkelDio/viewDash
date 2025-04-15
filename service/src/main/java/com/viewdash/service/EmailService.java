@@ -90,6 +90,7 @@ public class EmailService {
 
         try {
             helper.setTo("ouvidoria@clinicalosangeles.com.br");
+            helper.setCc(new String[]{"administracao@clinicalosangeles.com.br"});
             String htmlContent = templateEngine.process(template, context);
             helper.setText(htmlContent, true);
             mailSender.send(mimeMessage);

@@ -66,16 +66,25 @@ public class NPSService extends AbstractService {
 
     private Map<String, Object> getTotalScoreByDepartment(Query query) {
         List<DepartmentChart> answers = mongoTemplate.find(query, DepartmentChart.class);
+      try {
 
-        Map<String, Object> result = Map.of(
-                "title", answers.get(0).getQuestionTitle(),
-                "observations", answers.stream().filter(item -> !item.getQuestionObservation().equals("N/A") && !item.getQuestionObservation().isEmpty()).map(DepartmentChart::getQuestionObservation).toList(),
-                "detractors", answers.stream().filter(item -> item.getScore().equals("DETRACTOR")).count(),
-                "neutrals", answers.stream().filter(item -> item.getScore().equals("NEUTRAL")).count(),
-                "promoters", answers.stream().filter(item -> item.getScore().equals("PROMOTER")).count()
-        );
+         if(!answers.isEmpty()) {
+             Map<String, Object> result = Map.of(
+                     "title", answers.get(0).getQuestionTitle(),
+                     "observations", answers.stream().filter(item -> !item.getQuestionObservation().equals("N/A") && !item.getQuestionObservation().isEmpty()).map(DepartmentChart::getQuestionObservation).toList(),
+                     "detractors", answers.stream().filter(item -> item.getScore().equals("DETRACTOR")).count(),
+                     "neutrals", answers.stream().filter(item -> item.getScore().equals("NEUTRAL")).count(),
+                     "promoters", answers.stream().filter(item -> item.getScore().equals("PROMOTER")).count()
+             );
+             return result;
+         }
 
-        return result;
+          return null;
+      } catch (Exception e) {
+          e.printStackTrace();
+          System.out.println(answers);
+          return null;
+      }
     }
 
 
