@@ -19,8 +19,8 @@ public class PublicFormController {
     PublicFormService publicFormService;
 
     @GetMapping("get-form")
-    public ResponseEntity<Form> getForm() {
-        return publicFormService.getForm();
+    public ResponseEntity<Form> getForm(@RequestParam(value = "type", required = false) String type) {
+        return publicFormService.getForm(type);
     }
 
     @PostMapping("save-answer")

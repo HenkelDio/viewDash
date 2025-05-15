@@ -26,9 +26,17 @@ public class PublicFormService extends AbstractService {
         this.emailService = emailService;
     }
 
-    public ResponseEntity<Form> getForm() {
-        logger.info("Getting form");
-        return ResponseEntity.ok(mongoTemplate.findOne(new Query(Criteria.where("status").is("ACTIVE")), Form.class));
+    public ResponseEntity<Form> getForm(String type) {
+
+        if(type != null && !type.isEmpty()) {
+            logger.info("Getting form by type: " + type);
+            return ResponseEntity.ok(mongoTemplate.findOne(new Query(Criteria.where("type").is(type).and("status").is("ACTIVE")), Form.class));
+        }
+
+
+        logger.info("Getting form by type general");
+        return ResponseEntity.ok(mongoTemplate.findOne(new Query(Criteria.where("type").is("general").and("status").is("ACTIVE")), Form.class));
+
     }
 
     public ResponseEntity<Form> saveAnswer(AnswerDTO answerDTO, String npsId) throws MessagingException {
