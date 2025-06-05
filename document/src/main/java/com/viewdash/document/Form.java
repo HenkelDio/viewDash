@@ -34,5 +34,6 @@ public class Form implements Serializable {
     @Setter
     public static class Parameters implements Serializable {
         private boolean feedbackRequest;
+        private boolean employeeName;
     }
 }

@@ -1,5 +1,7 @@
 package com.viewdash.controller;
 
+import com.viewdash.document.Answer;
+import com.viewdash.document.AnswerRh;
 import com.viewdash.document.Form;
 import com.viewdash.document.User;
 import com.viewdash.service.NPSService;
@@ -9,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -64,5 +67,15 @@ public class NPSController {
     @GetMapping("report-by-question")
     public ResponseEntity<?> reportByQuestion(@RequestHeader long startDate, @RequestHeader long endDate) {
         return npsService.getReportByQuestion(startDate, endDate);
+    }
+
+    @GetMapping("count-rh-answers")
+    public ResponseEntity<List<AnswerRh>> countRHAnswers(@RequestHeader long startDate, @RequestHeader long endDate) {
+        return npsService.countRHAnswers(startDate, endDate);
+    }
+
+    @GetMapping("get-answer-by-id")
+    public ResponseEntity<Answer> getAnswerById(@RequestHeader String id) {
+        return npsService.getAnswerById(id);
     }
 }

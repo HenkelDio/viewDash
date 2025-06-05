@@ -1,6 +1,7 @@
 package com.viewdash.service;
 
 import com.viewdash.document.Answer;
+import com.viewdash.document.AnswerRh;
 import com.viewdash.document.DepartmentChart;
 import com.viewdash.document.DTO.AnswerDTO;
 import com.viewdash.document.Form;
@@ -11,7 +12,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -85,5 +85,21 @@ public class PublicFormService extends AbstractService {
                 .filter(item -> item.getIndex().equals(index))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Question with index " + index + " not found."));
+    }
+
+    public ResponseEntity saveRhAnswer(AnswerRh answerRhDTO) {
+        try {
+            logger.info("Saving rh answer");
+            AnswerRh answerRh = new AnswerRh();
+            answerRh.setTimestamp(System.currentTimeMillis());
+            answerRh.setDescription(answerRhDTO.getDescription());
+            answerRh.setEmployeeName(answerRhDTO.getEmployeeName());
+            answerRh.setType(answerRhDTO.getType());
+
+            return ResponseEntity.ok(mongoTemplate.save(answerRh));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

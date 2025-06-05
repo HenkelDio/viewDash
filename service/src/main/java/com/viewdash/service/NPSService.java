@@ -386,7 +386,7 @@ public class NPSService extends AbstractService {
         try {
             List<Form.Question> questions = mongoTemplate.findOne(new Query(Criteria.where("status").is("ACTIVE")), Form.class).getQuestions();
             List<Map<String, Object>> resultByDepartment = new ArrayList<>();
-            List<String> reviews = new ArrayList<>();
+            List<Map<String, String>> reviews = new ArrayList<>();
             Map<String, Object> resultManifest = new HashMap<>();
             Map<String, Object> payload = new HashMap<>();
 
@@ -476,14 +476,48 @@ public class NPSService extends AbstractService {
         }
     }
 
-    private void getReviews(Answer answer, List<String> reviews) {
+    private void getReviews(Answer answer, List<Map<String, String>> reviews) {
         for (Form.Question question : answer.getQuestions()) {
             if (!"14".equals(question.getIndex())) continue;
+            if (question.getAnswer() == null || question.getAnswer().isEmpty() || "N/A".equalsIgnoreCase(question.getAnswer())) continue;
 
-            String response = question.getAnswer();
-            if (response == null || response.isEmpty() || "N/A".equalsIgnoreCase(response)) continue;
+            Map<String, String> response = new HashMap<>();
+            response.put("answer", question.getAnswer());
+            response.put("_id", answer.getId());
 
             reviews.add(response);
+        }
+    }
+
+    public ResponseEntity<List<AnswerRh>> countRHAnswers(long startDate, long endDate) {
+        logger.info("Getting count by rh");
+
+        try {
+            long twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
+            endDate += twentyFourHoursInMillis;
+
+            Criteria criteria = new Criteria();
+            if (startDate > 0 && endDate > 0) {
+                criteria.and("timestamp").gte(startDate).lte(endDate);
+            }
+            Query query = new Query(criteria);
+            query.with(Sort.by(Sort.Direction.DESC, "timestamp"));
+            return ResponseEntity.ok(mongoTemplate.find(query, AnswerRh.class));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+
+    }
+
+    public ResponseEntity<Answer> getAnswerById(String id) {
+        logger.info("Getting answer by id");
+
+        try {
+            return ResponseEntity.ok(mongoTemplate.findById(id, Answer.class));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

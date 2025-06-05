@@ -1,15 +1,13 @@
 package com.viewdash.controller;
 
+import com.viewdash.document.AnswerRh;
 import com.viewdash.document.DTO.AnswerDTO;
 import com.viewdash.document.Form;
 import com.viewdash.service.PublicFormService;
 import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("public/form")
@@ -28,4 +26,8 @@ public class PublicFormController {
         return publicFormService.saveAnswer(answerDTO, npsId);
     }
 
+    @PostMapping("save-rh-answer")
+    public ResponseEntity saveRhAnswer(@RequestBody AnswerRh answerRhDTO) {
+        return publicFormService.saveRhAnswer(answerRhDTO);
+    }
 }
