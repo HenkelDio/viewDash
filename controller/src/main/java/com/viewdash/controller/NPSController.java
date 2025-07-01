@@ -1,9 +1,6 @@
 package com.viewdash.controller;
 
-import com.viewdash.document.Answer;
-import com.viewdash.document.AnswerRh;
-import com.viewdash.document.Form;
-import com.viewdash.document.User;
+import com.viewdash.document.*;
 import com.viewdash.service.NPSService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -72,6 +69,11 @@ public class NPSController {
     @GetMapping("count-rh-answers")
     public ResponseEntity<List<AnswerRh>> countRHAnswers(@RequestHeader long startDate, @RequestHeader long endDate) {
         return npsService.countRHAnswers(startDate, endDate);
+    }
+
+    @GetMapping("count-general-answers")
+    public ResponseEntity<List<GeneralAnswer>> countGeneralAnswers(@RequestHeader long startDate, @RequestHeader long endDate, @RequestHeader String type) {
+        return npsService.countGeneralAnswers(startDate, endDate, type);
     }
 
     @GetMapping("get-answer-by-id")

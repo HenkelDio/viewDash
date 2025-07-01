@@ -53,6 +53,7 @@ public class AnswerBuilder {
         answer.setPatientName(answerDTO.getPatientInfo().getPatientName());
         answer.setPatientPhone(answerDTO.getPatientInfo().getPatientPhone());
         answer.setPatientEmail(answerDTO.getPatientInfo().getPatientEmail());
+        answer.setOrigin(answerDTO.getOrigin());
     }
 
     private void processAnswers() {

@@ -11,6 +11,7 @@ import java.util.List;
 public class AnswerDTO {
     private PatientInfo patientInfo;
     private List<Answer> answers;
+    private String origin;
 
     @Getter
     @Setter

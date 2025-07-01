@@ -28,6 +28,7 @@ public class Answer {
     private String npsId;
     private RequestAnswered requestAnswered;
     private Score score;
+    private String origin;
 
     @Getter
     @Setter

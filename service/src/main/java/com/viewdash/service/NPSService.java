@@ -520,4 +520,26 @@ public class NPSService extends AbstractService {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    public ResponseEntity<List<GeneralAnswer>> countGeneralAnswers(long startDate, long endDate, String type) {
+        logger.info(String.format("Counting general answers by %s", type));
+
+        try {
+            long twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
+            endDate += twentyFourHoursInMillis;
+
+            Criteria criteria = new Criteria();
+            if (startDate > 0 && endDate > 0) {
+                criteria.and("timestamp").gte(startDate).lte(endDate);
+            }
+
+            criteria.and("type").is(type);
+            Query query = new Query(criteria);
+            query.with(Sort.by(Sort.Direction.DESC, "timestamp"));
+            return ResponseEntity.ok(mongoTemplate.find(query, GeneralAnswer.class));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

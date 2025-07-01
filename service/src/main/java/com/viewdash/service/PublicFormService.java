@@ -1,12 +1,10 @@
 package com.viewdash.service;
 
-import com.viewdash.document.Answer;
-import com.viewdash.document.AnswerRh;
-import com.viewdash.document.DepartmentChart;
+import com.viewdash.document.*;
 import com.viewdash.document.DTO.AnswerDTO;
-import com.viewdash.document.Form;
 import com.viewdash.service.Utils.Utils;
 import jakarta.mail.MessagingException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.ResponseEntity;
@@ -96,7 +94,28 @@ public class PublicFormService extends AbstractService {
             answerRh.setEmployeeName(answerRhDTO.getEmployeeName());
             answerRh.setType(answerRhDTO.getType());
 
+            logger.info("Sending email...");
+            emailService.sendEmailToRH(answerRh);
+            logger.info("Email sent");
+
             return ResponseEntity.ok(mongoTemplate.save(answerRh));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    public ResponseEntity saveGeneralAnswer(GeneralAnswer answer) {
+        try {
+            logger.info(String.format("Saving answer type %s", answer.getType()));
+            GeneralAnswer generalAnswer = new GeneralAnswer();
+            generalAnswer.setTimestamp(System.currentTimeMillis());
+            generalAnswer.setFeedbackReturn(answer.isFeedbackReturn());
+            generalAnswer.setType(answer.getType());
+            generalAnswer.setAnswers(answer.getAnswers());
+            generalAnswer.setUserInfo(answer.getUserInfo());
+
+            return ResponseEntity.ok(mongoTemplate.save(generalAnswer));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();

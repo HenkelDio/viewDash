@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .logo {
+            text-align: center;
+            padding: 20px;
+        }
+        .header {
+            background-color: #003cff;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .content {
+            padding: 20px;
+            color: #333333;
+        }
+        .content h2 {
+            font-size: 20px;
+            color: #003cff;
+        }
+        .content p {
+            line-height: 1.6;
+            margin: 10px 0;
+        }
+        .footer {
+            background-color: #f4f4f9;
+            color: #666666;
+            text-align: center;
+            padding: 15px;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #003cff;
+            text-decoration: none;
+        }
+
+        .button {
+            padding: 10px 20px;
+            background-color: rgb(0, 60, 255);
+            color: white;
+            border: none;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <!-- Header -->
+    <div class="header">
+        <h1>Hospital Clínica Los Angeles</h1>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <h2>[RH] Nova notificação</h2>
+        <p><strong>Tipo de manifestação:</strong> [[${type}]]</p>
+        <p><strong>Descrição:</strong> [[${description}]]</p>
+        <p>Para ver mais infomações clique no botão abaixo ou copie o link.</p>
+
+        <a href="https://dashview-iota.vercel.app/" target="_blank" class="button">ACESSAR GERENCIADOR DE PESQUISAS</a>
+
+        <p>
+            <a href="https://dashview-iota.vercel.app/">https://dashview-iota.vercel.app/</a>
+        </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>&copy; 2025 Hospital Clínica Los Angeles. Todos os direitos reservados.</p>
+        <p><a href="mailto:ouvidoria@clinicalosangeles.com.br">ouvidoria@clinicalosangeles.com.br</a></p>
+    </div>
+</div>
+</body>
+</html>

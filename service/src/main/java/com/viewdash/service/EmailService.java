@@ -1,9 +1,6 @@
 package com.viewdash.service;
 
-import com.viewdash.document.Answer;
-import com.viewdash.document.Department;
-import com.viewdash.document.Form;
-import com.viewdash.document.PatientNps;
+import com.viewdash.document.*;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.bson.Document;
@@ -58,6 +55,23 @@ public class EmailService {
 
 
         return new Result(mimeMessage, helper, context);
+    }
+
+    public void sendEmailToRH(AnswerRh answerRh) throws MessagingException {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+        helper.setFrom("ouvidoria@clinicalosangeles.com.br");
+        helper.setSubject("[RH] NOVA NOTIFICAÇÃO");
+        helper.setTo("rh@clinicalosangeles.com.br");
+
+        Context context = new Context();
+        context.setVariable("type", answerRh.getType());
+        context.setVariable("description", answerRh.getDescription());
+
+        String htmlContent = templateEngine.process("rh-notification.html", context);
+        helper.setText("Teste");
+        mailSender.send(mimeMessage);
     }
 
     public void sendEmailToManager(Form.Question question, Answer answer) throws MessagingException {
