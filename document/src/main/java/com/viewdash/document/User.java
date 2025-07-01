@@ -43,6 +43,9 @@ public class User implements Serializable {
         private boolean viewAndEditDepartments;
         private boolean moduleNps;
         private boolean moduleRh;
+        private boolean moduleProspecting;
+        private boolean moduleNotification;
+        private boolean moduleViews;
     }
 
     public enum STATUS {
