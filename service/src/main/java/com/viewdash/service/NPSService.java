@@ -384,7 +384,7 @@ public class NPSService extends AbstractService {
         }
 
         try {
-            List<Form.Question> questions = mongoTemplate.findOne(new Query(Criteria.where("status").is("ACTIVE")), Form.class).getQuestions();
+            List<Form.Question> questions = mongoTemplate.findOne(new Query(Criteria.where("status").is("ACTIVE").and("type").is("general")), Form.class).getQuestions();
             List<Map<String, Object>> resultByDepartment = new ArrayList<>();
             List<Map<String, String>> reviews = new ArrayList<>();
             Map<String, Object> resultManifest = new HashMap<>();
