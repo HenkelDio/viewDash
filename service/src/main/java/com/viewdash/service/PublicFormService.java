@@ -55,7 +55,7 @@ public class PublicFormService extends AbstractService {
             String answerFinal = question.getAnswer();
             if(!INVALID_ANSWERS.contains(question.getAnswer()) && !"N/A".equals(answerFinal)) {
 
-                Form form = mongoTemplate.findOne(new Query(Criteria.where("status").is("ACTIVE")), Form.class);
+                Form form = mongoTemplate.findOne(new Query(Criteria.where("status").is("ACTIVE").and("type").is("general")), Form.class);
                 if (form == null) {
                     throw new IllegalStateException("No active form found.");
                 }
