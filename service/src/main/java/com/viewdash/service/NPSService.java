@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Service
 public class NPSService extends AbstractService {
@@ -236,7 +237,19 @@ public class NPSService extends AbstractService {
 
             query.with(Sort.by(Sort.Direction.DESC, "timestamp"));
 
-            return ResponseEntity.ok(mongoTemplate.find(query, Answer.class));
+            List<Answer> answers = mongoTemplate.find(query, Answer.class);
+
+            for (Answer answer : answers) {
+                if (answer.getClassification() != null && answer.getClassification().getId() != null) {
+                    Classification fullClassification = mongoTemplate.findById(
+                            answer.getClassification().getId(), Classification.class
+                    );
+                    answer.setClassification(fullClassification);
+                }
+            }
+
+            return ResponseEntity.ok(answers);
+
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().body("Error");
@@ -373,54 +386,97 @@ public class NPSService extends AbstractService {
     }
 
     public ResponseEntity<Map<String, Object>> getReportByQuestion(long startDate, long endDate) {
-        logger.info("Getting report by question {}", startDate);
+        logger.info("Getting report by question from {} to {}", startDate, endDate);
 
-        long twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
+        final long twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
         endDate += twentyFourHoursInMillis;
 
-        Criteria criteria = new Criteria();
-        if (startDate > 0 && endDate > 0) {
-            criteria.and("timestamp").gte(startDate).lte(endDate);
-        }
-
         try {
-            List<Form.Question> questions = mongoTemplate.findOne(new Query(Criteria.where("status").is("ACTIVE").and("type").is("general")), Form.class).getQuestions();
+            // 1. Define período
+            Criteria criteria = new Criteria();
+            if (startDate > 0 && endDate > 0) {
+                criteria.and("timestamp").gte(startDate).lte(endDate);
+            }
+
+            // 2. Busca formulário com perguntas
+            Form form = mongoTemplate.findOne(
+                    new Query(Criteria.where("status").is("ACTIVE").and("type").is("general")),
+                    Form.class
+            );
+
+            if (form == null || form.getQuestions() == null) {
+                logger.warn("Formulário não encontrado ou sem perguntas");
+                return ResponseEntity.ok(Collections.emptyMap());
+            }
+
+            List<Form.Question> questions = form.getQuestions();
             List<Map<String, Object>> resultByDepartment = new ArrayList<>();
             List<Map<String, String>> reviews = new ArrayList<>();
             Map<String, Object> resultManifest = new HashMap<>();
+            Map<String, Object> resultClassifications = new HashMap<>();
             Map<String, Object> payload = new HashMap<>();
 
-            questions.stream().filter(item -> !INVALID_ANSWERS.contains(item.getIndex())).forEach(question -> {
-                Query queryChart = new Query(Criteria.where("questionTitle").is(question.getTitle()));
-                queryChart.addCriteria(criteria);
-                resultByDepartment.add(getTotalScoreByDepartment(queryChart));
-            });
+            // 3. Gera dados por pergunta (exceto índices inválidos)
+            questions.stream()
+                    .filter(q -> !INVALID_ANSWERS.contains(q.getIndex()))
+                    .forEach(question -> {
+                        Query questionQuery = new Query(Criteria.where("questionTitle").is(question.getTitle()));
+                        questionQuery.addCriteria(criteria);
+                        resultByDepartment.add(getTotalScoreByDepartment(questionQuery));
+                    });
 
-
+            // 4. Busca respostas no período
             List<Answer> answers = mongoTemplate.find(new Query(criteria), Answer.class);
+
+            // 5. Extrai avaliações textuais
             for (Answer answer : answers) {
                 getReviews(answer, reviews);
             }
 
+            // 6. Dados especiais (índices 12 e 13)
             getResultIndex13And12(answers, resultByDepartment);
 
+            // 7. Manifestos
             resultManifest.put("title", "Tipo de manifestação");
-            resultManifest.put("compliments", answers.stream().filter(item -> item.getAnswerType().equals("Elogio")).count());
-            resultManifest.put("suggestions", answers.stream().filter(item -> item.getAnswerType().equals("Sugestão")).count());
-            resultManifest.put("complaints", answers.stream().filter(item -> item.getAnswerType().equals("Reclamação")).count());
+            resultManifest.put("compliments", countAnswerType(answers, "Elogio"));
+            resultManifest.put("suggestions", countAnswerType(answers, "Sugestão"));
+            resultManifest.put("complaints", countAnswerType(answers, "Reclamação"));
 
+            // 8. Classificações
+            Map<String, Long> classificationCounts = answers.stream()
+                    .filter(a -> a.getClassification() != null)
+                    .collect(Collectors.groupingBy(
+                            a -> a.getClassification().getId(),
+                            Collectors.counting()
+                    ));
 
+            List<Classification> classifications = mongoTemplate.find(new Query(), Classification.class);
+            for (Classification classification : classifications) {
+                long count = classificationCounts.getOrDefault(classification.getId(), 0L);
+                resultClassifications.put(classification.getDescription(), count);
+            }
+
+            // 9. Monta payload
             payload.put("department", resultByDepartment);
             payload.put("reviews", reviews);
             payload.put("manifest", resultManifest);
+            payload.put("classifications", resultClassifications);
 
             return ResponseEntity.ok(payload);
+
         } catch (Exception e) {
-            e.printStackTrace();
-            logger.error("Error occurred while getting report", e);
+            logger.error("Erro ao gerar relatório de perguntas", e);
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    // Método auxiliar
+    private long countAnswerType(List<Answer> answers, String type) {
+        return answers.stream()
+                .filter(a -> type.equals(a.getAnswerType()))
+                .count();
+    }
+
 
     private void getResultIndex13And12(List<Answer> answers, List<Map<String, Object>> resultByDepartment) {
         List<Form.Question> index13 = answers.stream()
@@ -514,7 +570,14 @@ public class NPSService extends AbstractService {
         logger.info("Getting answer by id");
 
         try {
-            return ResponseEntity.ok(mongoTemplate.findById(id, Answer.class));
+            Answer answer = mongoTemplate.findById(id, Answer.class);
+            if (answer.getClassification() != null && answer.getClassification().getId() != null) {
+                Classification fullClassification = mongoTemplate.findById(
+                        answer.getClassification().getId(), Classification.class
+                );
+                answer.setClassification(fullClassification);
+            }
+            return ResponseEntity.ok(answer);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();

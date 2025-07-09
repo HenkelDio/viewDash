@@ -29,6 +29,8 @@ public class Answer {
     private RequestAnswered requestAnswered;
     private Score score;
     private String origin;
+    private Classification classification;
+
 
     @Getter
     @Setter
