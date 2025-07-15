@@ -30,6 +30,7 @@ public class Answer {
     private Score score;
     private String origin;
     private Classification classification;
+    private String feedbackType;
 
 
     @Getter

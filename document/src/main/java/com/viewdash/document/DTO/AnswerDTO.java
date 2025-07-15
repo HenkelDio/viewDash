@@ -12,6 +12,7 @@ public class AnswerDTO {
     private PatientInfo patientInfo;
     private List<Answer> answers;
     private String origin;
+    private String feedbackType;
 
     @Getter
     @Setter

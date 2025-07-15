@@ -54,6 +54,7 @@ public class AnswerBuilder {
         answer.setPatientPhone(answerDTO.getPatientInfo().getPatientPhone());
         answer.setPatientEmail(answerDTO.getPatientInfo().getPatientEmail());
         answer.setOrigin(answerDTO.getOrigin());
+        answer.setFeedbackType(answerDTO.getFeedbackType());
     }
 
     private void processAnswers() {
