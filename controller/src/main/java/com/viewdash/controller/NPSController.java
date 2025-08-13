@@ -42,8 +42,8 @@ public class NPSController {
     }
 
     @GetMapping("get-answers")
-    public ResponseEntity<?> getAnswers(@RequestParam String sortBy, @RequestParam String npsId, @RequestHeader long startDate, @RequestHeader long endDate) {
-        return npsService.getAnswers(sortBy, npsId, startDate, endDate);
+    public ResponseEntity<?> getAnswers(@RequestParam String sortBy, @RequestParam String npsId, @RequestParam String type, @RequestHeader long startDate, @RequestHeader long endDate) {
+        return npsService.getAnswers(sortBy, npsId, type, startDate, endDate);
     }
 
     @GetMapping("get-score-departments")

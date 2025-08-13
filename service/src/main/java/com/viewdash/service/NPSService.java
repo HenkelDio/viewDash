@@ -215,7 +215,7 @@ public class NPSService extends AbstractService {
         }
     }
 
-    public ResponseEntity<?> getAnswers(String sortBy, String npsId, long startDate, long endDate) {
+    public ResponseEntity<?> getAnswers(String sortBy, String npsId, String type, long startDate, long endDate) {
         logger.info("Getting answers");
 
         try {
@@ -228,6 +228,11 @@ public class NPSService extends AbstractService {
             if(Objects.nonNull(npsId) && !npsId.isEmpty()) {
                 query.addCriteria(Criteria.where("npsId").is(npsId));
             }
+
+            if(!"all".equals(type)) {
+                query.addCriteria(Criteria.where("score.score").is(type.toUpperCase()));
+            }
+
 
             if(startDate > 0 && endDate > 0) {
                 long twentyFourHoursInMillis = 24 * 60 * 60 * 1000;
