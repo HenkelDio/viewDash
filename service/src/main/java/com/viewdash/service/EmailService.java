@@ -13,9 +13,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -74,7 +72,7 @@ public class EmailService {
         mailSender.send(mimeMessage);
     }
 
-    public void sendEmailToManager(Form.Question question, Answer answer) throws MessagingException {
+    public void sendEmailToManager(Form.Question question, Answer answer, String report) throws MessagingException {
         Form form = mongoTemplate.findOne(new Query(Criteria.where("status").is("ACTIVE")), Form.class);
         if (form == null) {
             throw new IllegalStateException("No active form found.");
@@ -94,6 +92,7 @@ public class EmailService {
             List<Department> departments = findDepartmentsByIds(questionFound.getDepartmentEmails());
             sendEmailsToDepartments(departments, mimeMessage, helper, context, answer);
         } else if (List.of("12", "13").contains(questionFound.getIndex())) {
+            context.setVariable("report", report);
             sendEmailDefault(mimeMessage, helper, context, answer);
         }
 
@@ -103,7 +102,7 @@ public class EmailService {
         String template = "manager-deflator-template";
 
         try {
-            helper.setTo("ouvidoria@clinicalosangeles.com.br");
+            helper.setTo("willianhenkel@gmail.com");
             helper.setCc(new String[]{"administracao@clinicalosangeles.com.br"});
             String htmlContent = templateEngine.process(template, context);
             helper.setText(htmlContent, true);
@@ -147,7 +146,7 @@ public class EmailService {
         departments.forEach(department -> {
             if(department.getEmailManager() != null) {
                 try {
-                    helper.setTo(department.getEmailManager());
+                    helper.setTo("willianhenkel@gmail.com");
                     helper.setCc(new String[]{"ouvidoria@clinicalosangeles.com.br"});
 
                     String htmlContent = templateEngine.process(template, context);

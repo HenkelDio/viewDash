@@ -68,6 +68,8 @@ public class AnswerBuilder {
             return item;
         }).toList());
 
+        String report = getReport();
+
         try {
             for (AnswerDTO.Answer item : answerDTO.getAnswers()) {
                 Form.Question question = buildQuestion(item);
@@ -75,7 +77,7 @@ public class AnswerBuilder {
                 questions.add(question);
 
                 if (!item.getAnswer().equals("N/A") && isLowNpsScore(item)) {
-                    sendEmail(executorService, question);
+                    sendEmail(executorService, question, report);
                 }
             }
         } finally {
@@ -99,10 +101,20 @@ public class AnswerBuilder {
 
     }
 
-    private void sendEmail(ExecutorService executorService, Form.Question question) {
+    private String getReport() {
+        try {
+            return answerDTO.getAnswers().stream().filter(item -> "14".equals(item.getIndex()))
+                    .findFirst().get().getAnswer();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "Sem relato";
+    }
+
+    private void sendEmail(ExecutorService executorService, Form.Question question, String report) {
         executorService.submit(() -> {
             try {
-                sendEmailToManager(question);
+                sendEmailToManager(question, report);
             } catch (MessagingException e) {
                e.printStackTrace();
             }
@@ -149,8 +161,8 @@ public class AnswerBuilder {
         }
     }
 
-    private void sendEmailToManager(Form.Question question) throws MessagingException {
-        emailService.sendEmailToManager(question, answer);
+    private void sendEmailToManager(Form.Question question, String report) throws MessagingException {
+        emailService.sendEmailToManager(question, answer, report);
     }
 
     private Long convertDateToTimestamp(String date) {
