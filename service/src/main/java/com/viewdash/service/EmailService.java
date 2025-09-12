@@ -102,7 +102,7 @@ public class EmailService {
         String template = "manager-deflator-template";
 
         try {
-            helper.setTo("willianhenkel@gmail.com");
+            helper.setTo("ouvidoria@clinicalosangeles.com.br");
             helper.setCc(new String[]{"administracao@clinicalosangeles.com.br"});
             String htmlContent = templateEngine.process(template, context);
             helper.setText(htmlContent, true);
